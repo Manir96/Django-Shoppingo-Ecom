@@ -1,0 +1,279 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Shop Cart{% endblock title %}
+{% block main-content %}
+	<!--start page wrapper -->
+	<div class="page-wrapper">
+		<div class="page-content">
+			<!--start breadcrumb-->
+			<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
+				<div class="container">
+					<div class="page-breadcrumb d-flex align-items-center">
+						<h3 class="breadcrumb-title pe-3">Shop Cart</h3>
+						<div class="ms-auto">
+							<nav aria-label="breadcrumb">
+								<ol class="breadcrumb mb-0 p-0">
+									<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
+									</li>
+									<li class="breadcrumb-item"><a href="javascript:;">Shop</a>
+									</li>
+									<li class="breadcrumb-item active" aria-current="page">Shop Cart</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!--end breadcrumb-->
+			<!--start shop cart-->
+			<section class="py-4">
+				<div class="container">
+					<div class="shop-cart">
+						<div class="row">
+							<div class="col-12 col-xl-8">
+								<div class="shop-cart-list mb-3 p-3">
+									{% for entry in cart_items_base %}
+										{% with item=entry.item item_total=entry.item_total %}
+										<div class="row align-items-center g-3">
+											<div class="col-12 col-lg-6">
+												<div class="d-lg-flex align-items-center gap-3">
+													<div class="cart-img text-center text-lg-start">
+														{% if item.product.images.first %}
+															<img src="{{ item.product.images.first.image.url }}" width="130" alt="{{ item.product.title }}">
+														{% else %}
+															<img src="{% static 'assets/images/no-image.png' %}" width="130" alt="No image">
+														{% endif %}
+													</div>
+													<div class="cart-detail text-center text-lg-start">
+														<h6 class="mb-2">{{ item.product.title }}</h6>
+														<p class="mb-0">Size: <span>{{ item.size }}</span></p>
+														<p class="mb-2">Color: <span>{{ item.color }}</span></p>
+														<h5 class="mb-0">ItemTotal: ${{ item_total|floatformat:2 }}</h5>
+													</div>
+												</div>
+											</div>
+											<div class="col-12 col-lg-3">
+												<div class="cart-action text-center">
+													<input type="number" class="form-control rounded-0" value="{{ item.quantity }}" min="1" data-item-id="{{ item.id }}">
+												</div>
+											</div>
+											<div class="col-12 col-lg-3">
+												<div class="text-center">
+													<div class="d-flex gap-3 justify-content-center justify-content-lg-end">
+														<a href="{% url 'remove_cart_item' item.id %}" class="btn btn-outline-dark rounded-0 btn-ecomm">
+															<i class='bx bx-x'></i> Remove
+														</a>
+														<a href="{% url 'remove_to_wishlist' item.id %}" class="btn btn-light rounded-0 btn-ecomm">
+															<i class='bx bx-heart me-0'></i>
+														</a>
+													</div>
+												</div>
+											</div>
+										</div>
+										<hr>
+										{% endwith %}
+									{% empty %}
+										<p class="text-center">Your cart is empty.</p>
+									{% endfor %}
+								</div>
+
+							</div>
+							<div class="col-12 col-xl-4">
+								<div class="checkout-form p-3 bg-light">
+									<div class="card rounded-0 border bg-transparent shadow-none">
+										<div class="card-body">
+											<p class="fs-5">Apply Discount Code</p>
+											<form method="POST" action="{% url 'apply_coupon' %}">
+												{% csrf_token %}
+												<div class="input-group">
+													<input type="text" name="coupon_code" class="form-control rounded-0" placeholder="Enter discount code">
+													<button class="btn btn-dark btn-ecomm" type="submit">Apply</button>
+												</div>
+											</form>
+
+											{% if request.session.coupon_code %}
+												<p class="mt-2 text-success">
+													Applied Coupon: <strong>{{ request.session.coupon_code }}</strong>
+												</p>
+											{% endif %}
+										</div>
+									</div>
+									<div class="card rounded-0 border bg-transparent shadow-none">
+										<div class="card-body">
+											<p class="fs-5">Estimate Shipping and Tax</p>
+											<div class="my-3 border-top"></div>
+
+											<!-- Country -->
+											<div class="mb-3">
+											<label class="form-label">Country Name</label>
+											<select id="country-select" class="form-select rounded-0">
+												<option value="">-- Select Country --</option>
+												{% for country in country_name %}
+												<option value="{{ country.id }}">{{ country.nameName }}</option>
+												{% endfor %}
+											</select>
+											</div>
+
+											<!-- Division -->
+											<div class="mb-3">
+											<label class="form-label">Division</label>
+											<select id="division-select" class="form-select rounded-0">
+												<option value="">-- Select Division --</option>
+											</select>
+											</div>
+
+											<!-- District -->
+											<div class="mb-3">
+											<label class="form-label">District</label>
+											<select id="district-select" class="form-select rounded-0">
+												<option value="">-- Select District --</option>
+											</select>
+											</div>
+
+											<!-- Zip Code -->
+											<div class="mb-0">
+											<label class="form-label">Zip/Postal Code</label>
+											<input type="text" class="form-control rounded-0" placeholder="Enter your Zip/Postal code">
+											</div>
+										</div>
+									</div>
+									<div class="card rounded-0 border bg-transparent mb-0 shadow-none">
+										<div class="card-body">
+											<p class="mb-2">Subtotal: <span class="float-end">${{ cart_subtotal|floatformat:2 }}</span></p>
+											<p class="mb-2">Shipping: <span class="float-end">${{ shipping_charges.charge_amount|floatformat:2 }}</span></p>
+											<p class="mb-0">Coupon Discount: <span class="float-end">-${{ cart_coupon_discount|floatformat:2 }}</span></p>
+											<div class="my-3 border-top"></div>
+											<h5 class="mb-0">Order Total: <span class="float-end">${{ cart_order_total|floatformat:2 }}</span></h5>
+											<div class="my-4"></div>
+											<div class="d-grid">
+												<form method="POST" action="{% url 'checkout-details' %}">
+													{% csrf_token %}
+													<input type="hidden" name="country_id" id="country_id_field">
+													<input type="hidden" name="division_id" id="division_id_field">
+													<input type="hidden" name="district_id" id="district_id_field">
+													<input type="hidden" name="zip_code" id="zip_code_field">
+
+													<div class="d-grid">
+														<button type="submit" class="btn btn-dark btn-ecomm">
+														Proceed to Checkout
+														</button>
+													</div>
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!--end row-->
+					</div>
+				</div>
+			</section>
+			<!--end shop cart-->
+		</div>
+	</div>
+	<!--end page wrapper -->
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const quantityInputs = document.querySelectorAll('.cart-action input[type="number"]');
+
+			quantityInputs.forEach(input => {
+				input.addEventListener('change', function () {
+					const itemId = this.dataset.itemId;
+					let quantity = parseInt(this.value);
+					if (quantity < 1) quantity = 1;
+
+					const formData = new FormData();
+					formData.append('item_id', itemId);
+					formData.append('quantity', quantity);
+
+					fetch("{% url 'update_cart_quantity' %}", {
+						method: 'POST',
+						headers: {
+							'X-CSRFToken': '{{ csrf_token }}',
+							'X-Requested-With': 'XMLHttpRequest'
+						},
+						body: formData
+					})
+					.then(res => res.json())
+					.then(data => {
+						if (data.success) {
+							// Update item subtotal
+							const itemRow = input.closest('.row');
+							const itemTotalEl = itemRow.querySelector('h5');
+							itemTotalEl.textContent = `ItemTotal: $${data.item_total}`;
+
+							// Update cart subtotal (you can target your subtotal element)
+							const cartSubtotalEl = document.querySelector('#cart-subtotal'); // add id="cart-subtotal" to your subtotal element
+							if(cartSubtotalEl){
+								cartSubtotalEl.textContent = `$${data.cart_subtotal}`;
+							}
+
+							// Update cart total items badge
+							document.querySelectorAll('.alert-count').forEach(el => {
+								el.textContent = data.cart_total_items;
+							});
+						}
+					});
+				});
+			});
+		});
+
+document.addEventListener("DOMContentLoaded", function() {
+    const countrySelect = document.getElementById("country-select");
+    const divisionSelect = document.getElementById("division-select");
+    const districtSelect = document.getElementById("district-select");
+
+    // When country changes → load divisions
+    countrySelect.addEventListener("change", function() {
+      const countryId = this.value;
+      divisionSelect.innerHTML = '<option value="">-- Select Division --</option>';
+      districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+
+      if (countryId) {
+        fetch(`/ajax/get-divisions/?country_id=${countryId}`)
+          .then(res => res.json())
+          .then(data => {
+            data.forEach(div => {
+              const option = document.createElement("option");
+              option.value = div.id;
+              option.textContent = div.division_name;
+              divisionSelect.appendChild(option);
+            });
+          });
+      }
+    });
+
+    // When division changes → load districts
+    divisionSelect.addEventListener("change", function() {
+      const divisionId = this.value;
+      districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+
+      if (divisionId) {
+        fetch(`/ajax/get-districts/?division_id=${divisionId}`)
+          .then(res => res.json())
+          .then(data => {
+            data.forEach(dist => {
+              const option = document.createElement("option");
+              option.value = dist.id;
+              option.textContent = dist.district_name;
+              districtSelect.appendChild(option);
+            });
+          });
+      }
+    });
+  });
+
+
+const form = document.querySelector('form[action*="checkout-details"]');
+  form.addEventListener('submit', function() {
+    document.getElementById('country_id_field').value = document.getElementById('country-select').value;
+    document.getElementById('division_id_field').value = document.getElementById('division-select').value;
+    document.getElementById('district_id_field').value = document.getElementById('district-select').value;
+    document.getElementById('zip_code_field').value = document.querySelector('input[placeholder="Enter your Zip/Postal code"]').value;
+  });
+
+	</script>
+
+
+{% endblock main-content %}

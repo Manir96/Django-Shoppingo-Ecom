@@ -1,0 +1,166 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Shop Grid{% endblock title %}
+{% block main-content %}
+	<!--start page wrapper -->
+	<div class="page-wrapper">
+		<div class="page-content">
+			<!--start breadcrumb-->
+			<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
+				<div class="container">
+					<div class="page-breadcrumb d-flex align-items-center">
+						<h3 class="breadcrumb-title pe-3">Wishlist Grid</h3>
+						<div class="ms-auto">
+							<nav aria-label="breadcrumb">
+								<ol class="breadcrumb mb-0 p-0">
+									<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
+									</li>
+									<li class="breadcrumb-item"><a href="javascript:;">Wishlist</a>
+									</li>
+									<li class="breadcrumb-item active" aria-current="page">Wishlist</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!--end breadcrumb-->
+			<!--start Featured product-->
+			<section class="py-4">
+				<div class="container">
+					<div class="product-grid">
+						<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+							{% for item in wishlist_items %}
+							<div class="col">
+								<div class="card rounded-0 border">
+									<a href="{% url 'product-detail' item.product.slug %}">
+										{% if item.product.images.first %}
+											<img src="{{ item.product.images.first.image.url }}" class="card-img-top" alt="{{ item.product.title }}">
+										{% else %}
+											<img src="{% static 'assets/images/no-image.png' %}" class="card-img-top" alt="No image">
+										{% endif %}
+									</a>
+									<div class="card-body">
+										<div class="product-info">
+											<a href="javascript:;">
+												<p class="product-catergory font-13 mb-1">
+													{% if item.product.category %}
+														{{ item.product.category.name }}
+													{% else %}
+														Uncategorized
+													{% endif %}
+												</p>
+											</a>
+											<a href="{% url 'product-detail' item.product.slug %}">
+												<h6 class="product-name mb-2">{{ item.product.title }}</h6>
+											</a>
+											<div class="d-flex align-items-center">
+												<div class="mb-1 product-price">
+													{% if item.product.discount_price %}
+													<span class="me-1 text-decoration-line-through">${{ item.product.price }}</span>
+													<span class="fs-5">${{ item.product.orginal_price }}</span>
+													{% else %}
+														<span class="fs-5">${{ item.product.orginal_price }}</span>
+													{% endif %}
+												</div>
+												<div class="cursor-pointer ms-auto">	<i class="bx bxs-star text-warning"></i>
+													<i class="bx bxs-star text-warning"></i>
+													<i class="bx bxs-star text-warning"></i>
+													<i class="bx bxs-star text-warning"></i>
+													<i class="bx bxs-star text-warning"></i>
+												</div>
+											</div>
+											<div class="product-action mt-2">
+												<div class="d-grid gap-2">
+													<a href="javascript:;" 
+													class="btn btn-dark btn-ecomm"
+													onclick="handleProductAction({{ item.product.id }}, 'cart', this)">
+													<i class='bx bxs-cart-add'></i> Add to Cart
+													</a>
+
+													<a href="javascript:;" 
+													class="btn btn-light btn-ecomm"
+													onclick="handleProductAction({{ item.product.id }}, 'remove_wishlist', this)">
+													<i class='bx bx-trash'></i> Remove From List
+													</a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% empty %}
+								<p class="text-center">Your wishlist is empty!</p>
+							{% endfor %}
+						</div>
+						<!--end row-->
+					</div>
+				</div>
+			</section>
+			<!--end Featured product-->
+		</div>
+	</div>
+	<!--end page wrapper -->
+
+	<script>
+function handleProductAction(productId, action, el) {
+	const formData = new FormData();
+	formData.append("product_id", productId);
+	formData.append("action", action);
+
+	// ✅ REMOVE FROM WISHLIST
+	if (action === "remove_wishlist") {
+		fetch("{% url 'handle_product_action' %}", {
+			method: "POST",
+			headers: { "X-CSRFToken": "{{ csrf_token }}" },
+			body: formData
+		})
+		.then(res => res.json())
+		.then(data => {
+			if (data.success) {
+				// ✅ Show success message
+				const msgBox = document.createElement("div");
+				msgBox.textContent = data.message || "✅ Successfully removed from wishlist!";
+				msgBox.style.position = "fixed";
+				msgBox.style.top = "20px";
+				msgBox.style.right = "20px";
+				msgBox.style.background = "#28a745";
+				msgBox.style.color = "#fff";
+				msgBox.style.padding = "10px 20px";
+				msgBox.style.borderRadius = "6px";
+				msgBox.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+				msgBox.style.zIndex = "9999";
+				document.body.appendChild(msgBox);
+
+				// ✅ remove the card visually
+				el.closest(".col").style.opacity = "0.5";
+
+				// ✅ 1.2 sec পরে auto reload
+				setTimeout(() => {
+					msgBox.remove();
+					window.location.reload();
+				}, 1200);
+			} else {
+				alert(data.message || "Something went wrong!");
+			}
+		})
+		.catch(err => console.error(err));
+	}
+
+	// ✅ ADD TO CART → Redirect to Cart Page
+	else if (action === "cart") {
+		const form = document.createElement("form");
+		form.method = "POST";
+		form.action = "{% url 'handle_product_action' %}";
+		form.innerHTML = `
+			<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+			<input type="hidden" name="product_id" value="${productId}">
+			<input type="hidden" name="action" value="cart">
+		`;
+		document.body.appendChild(form);
+		form.submit();
+	}
+}
+</script>
+
+{% endblock main-content %}

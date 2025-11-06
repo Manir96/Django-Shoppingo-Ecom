@@ -1,0 +1,541 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!--favicon-->
+	<link rel="icon" href="{% static 'assets/images/favicon-32x32.png' %}" type="image/png" />
+	<!--plugins-->
+	<link href="{% static 'assets/plugins/OwlCarousel/css/owl.carousel.min.css' %}" rel="stylesheet" />
+	
+	<link href="{% static 'assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css' %}" rel="stylesheet" />
+	<!-- loader-->
+	<link href="{% static 'assets/css/pace.min.css' %}" rel="stylesheet" />
+	<script src="{% static 'assets/js/pace.min.js' %}"></script>
+	<!-- Bootstrap CSS -->
+	<link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+	<link href="{% static 'assets/css/app.css' %}" rel="stylesheet">
+	<link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet">
+	<link href="{% static 'assets/css/icons.css' %}" rel="stylesheet">
+	<title>Shopingo - eCommerce HTML Template</title>
+
+	
+</head>
+
+<body>
+	<!--wrapper-->
+	<div class="wrapper">
+		<!--start top header wrapper-->
+		<div class="header-wrapper">
+			<div class="top-menu">
+				<div class="container">
+					<nav class="navbar navbar-expand">
+						<div class="shiping-title d-none d-sm-flex">Welcome to our Shopingo store!</div>
+						<ul class="navbar-nav ms-auto d-none d-lg-flex">
+							<li class="nav-item"><a class="nav-link" href="{% url 'order-tracking' %}">Track Order</a>
+							</li>
+							
+							<li class="nav-item"><a class="nav-link" href="javascript:;">Help & FAQs</a>
+							</li>
+						</ul>
+						<ul class="navbar-nav">
+							<li class="nav-item dropdown"> <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">USD</a>
+								<ul class="dropdown-menu dropdown-menu-lg-end">
+									<li><a class="dropdown-item" href="#">USD</a>
+									</li>
+									<li><a class="dropdown-item" href="#">EUR</a>
+									</li>
+								</ul>
+							</li>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="#" data-bs-toggle="dropdown">
+									<div class="lang d-flex gap-1">
+										<div><i class="flag-icon flag-icon-um"></i>
+										</div>
+										<div><span>ENG</span>
+										</div>
+									</div>
+								</a>
+								<div class="dropdown-menu dropdown-menu-lg-end">
+									<a class="dropdown-item d-flex allign-items-center" href="javascript:;"> <i class="flag-icon flag-icon-de me-2"></i><span>German</span>
+									</a>	<a class="dropdown-item d-flex allign-items-center" href="javascript:;"><i
+								class="flag-icon flag-icon-fr me-2"></i><span>French</span></a>
+									<a class="dropdown-item d-flex allign-items-center" href="javascript:;"><i
+								class="flag-icon flag-icon-um me-2"></i><span>English</span></a>
+									<a class="dropdown-item d-flex allign-items-center" href="javascript:;"><i
+								class="flag-icon flag-icon-in me-2"></i><span>Hindi</span></a>
+									<a class="dropdown-item d-flex allign-items-center" href="javascript:;"><i
+								class="flag-icon flag-icon-cn me-2"></i><span>Chinese</span></a>
+									<a class="dropdown-item d-flex allign-items-center" href="javascript:;"><i
+						        class="flag-icon flag-icon-ae me-2"></i><span>Arabic</span></a>
+								</div>
+							</li>
+						</ul>
+						<ul class="navbar-nav social-link ms-lg-2 ms-auto">
+							<li class="nav-item"> <a class="nav-link" href="javascript:;"><i class='bx bxl-facebook'></i></a>
+							</li>
+							<li class="nav-item"> <a class="nav-link" href="javascript:;"><i class='bx bxl-twitter'></i></a>
+							</li>
+							<li class="nav-item"> <a class="nav-link" href="javascript:;"><i class='bx bxl-linkedin'></i></a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+			<div class="header-content bg-warning">
+				<div class="container">
+					<div class="row align-items-center gx-4">
+						<div class="col-auto">
+							<div class="d-flex align-items-center gap-3">
+								<div class="mobile-toggle-menu d-inline d-xl-none" data-bs-toggle="offcanvas"
+									data-bs-target="#offcanvasNavbar">
+									<i class="bx bx-menu"></i>
+								</div>
+								<div class="logo">
+									<a href="{% url 'home' %}">
+										<img src="{% static 'assets/images/logo-icon.png' %}" class="logo-icon" alt="" />
+									</a>
+								</div>
+							</div>
+						</div>
+						<div class="col-12 col-xl order-4 order-xl-0">
+							<div class="input-group flex-nowrap pb-3 pb-xl-0">
+								<input type="text" class="form-control w-100 border-dark border border-3" placeholder="Search for Products">
+								<button class="btn btn-dark btn-ecomm border-3" type="button">Search</button>
+							</div>
+						</div>
+						<div class="col-auto d-none d-xl-flex">
+							<div class="d-flex align-items-center gap-3">
+								<div class="fs-1 text-content"><i class='bx bx-headphone'></i></div>
+								<div class="">
+									<p class="mb-0 text-content">CALL US NOW</p>
+									<h5 class="mb-0">+880 1720 651306</h5>
+								</div>
+							</div>
+						</div>
+						<div class="col-auto ms-auto">
+							<div class="top-cart-icons">
+								<nav class="navbar navbar-expand">
+									<ul class="navbar-nav">
+										<li class="nav-item"><a href="{% url 'account-dashboard' %}" class="nav-link cart-link"><i class='bx bx-user'></i></a>
+										</li>
+										<li class="nav-item"><a href="{% url 'wishlist' %}" class="nav-link cart-link"><i class='bx bx-heart'></i></a>
+										</li>
+										<li class="nav-item dropdown dropdown-large">
+											<a href="#" class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative cart-link" data-bs-toggle="dropdown">
+												<span class="alert-count">{{ cart_total_items }}</span>
+												<i class='bx bx-shopping-bag'></i>
+											</a>
+											<div class="dropdown-menu dropdown-menu-end">
+												<a href="{% url 'shopping-cart' %}">
+													<div class="cart-header">
+														<p class="cart-header-title mb-0">{{ cart_total_items }} ITEMS</p>
+														<p class="cart-header-clear ms-auto mb-0">VIEW CART</p>
+													</div>
+												</a>
+
+												<div class="cart-list">
+													{% for entry in cart_items_base %}
+														{% with item=entry.item %}
+														<a class="dropdown-item" href="{% url 'shopping-cart' %}">
+															<div class="d-flex align-items-center">
+																<div class="flex-grow-1">
+																	<h6 class="cart-product-title">{{ item.product.title }}</h6>
+																	<p class="cart-product-price">{{ item.quantity }} × ${{ item.product.orginal_price }} = ${{ entry.item_total|floatformat:2 }}</p>
+																</div>
+																<div class="position-relative">
+																	<div class="cart-product-cancel position-absolute" onclick="removeCartItem(this)" data-item-id="{{ item.id }}">
+																		<i class='bx bx-x'></i>
+																	</div>
+																	<div class="cart-product">
+																		{% if item.product.images.first %}
+																			<img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}">
+																		{% else %}
+																			<img src="{% static 'assets/images/no-image.png' %}" alt="No image">
+																		{% endif %}
+																	</div>
+																</div>
+															</div>
+														</a>
+														{% endwith %}
+													{% empty %}
+														<p class="text-center p-2">Your cart is empty.</p>
+													{% endfor %}
+												</div>
+
+												<a href="{% url 'shopping-cart' %}">
+													<div class="text-center cart-footer d-flex align-items-center">
+														<h5 class="mb-0">TOTAL</h5>
+														<h5 class="mb-0 ms-auto">${{ cart_subtotal|floatformat:2 }}</h5>
+													</div>
+												</a>
+												<div class="d-grid p-3 border-top">
+													<a href="{% url 'checkout-details' %}" class="btn btn-dark btn-ecomm">CHECKOUT</a>
+												</div>
+											</div>
+										</li>
+
+									</ul>
+								</nav>
+							</div>
+						</div>
+					</div>
+					<!--end row-->
+				</div>
+			</div>
+			<div class="primary-menu">
+				<nav class="navbar navbar-expand-xl w-100 navbar-dark container mb-0 p-0">
+					<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+					  <div class="offcanvas-header">
+						<div class="offcanvas-logo"><img src="{% static 'assets/images/logo-icon.png' %}" width="100" alt="">
+						</div>
+						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					  </div>
+					  <div class="offcanvas-body primary-menu">
+						<ul class="navbar-nav justify-content-start flex-grow-1 gap-1">
+						  <li class="nav-item">
+							<a class="nav-link" href="{% url 'home' %}">Home</a>
+						  </li>
+						  <li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="tv-shows.html"
+							  data-bs-toggle="dropdown">
+							  Categories
+							</a>
+							<div class="dropdown-menu dropdown-large-menu">
+							  <div class="row">
+								{% for category in categories %}
+								<div class="col-12 col-xl-4">
+									<!-- <h6 class="large-menu-title">{{ category.name }}</h6> -->
+									<h6 class="large-menu-title">
+										<a href="{% url 'produc_category_view' category.slug %}" class="text-dark text-decoration-none">
+											{{ category.name }}
+										</a>
+									</h6>
+									<ul class="list-unstyled">
+									{% for sub in category.subcategories.all %}
+										<li>
+										<a href="{% url 'produc_subCategory_view' sub.slug %}">
+											{{ sub.name }}
+										</a>
+										</li>
+									{% empty %}
+										<li><em>No subcategories available</em></li>
+									{% endfor %}
+									</ul>
+								</div>
+								{% endfor %}
+								<div class="col-12 col-xl-4 d-none d-xl-block">
+								  <div class="pramotion-banner1">
+									<img src="{% static 'assets/images/gallery/menu-img.jpg' %}" class="img-fluid" alt="" />
+								  </div>
+								</div>
+								<!-- end col-3 -->
+							  </div>
+							  <!-- end row -->
+							</div>
+						  </li>
+						  <li class="nav-item"> <a class="nav-link" href="{% url 'shop-categories' %}">Our Store</a> 
+						  </li>
+						  <li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="javascript:;" data-bs-toggle="dropdown">
+							  Account
+							</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="{% url 'account-dashboard' %}">Dashboard</a>
+								</li>
+								<li><a class="dropdown-item" href="{% url 'account-downloads' %}">Downloads</a>
+								</li>
+								<li><a class="dropdown-item" href="{% url 'account-orders' %}">My Orders</a>
+								</li>
+								<li><a class="dropdown-item" href="{% url 'account-user-details' %}">User Details</a>
+								</li>
+								<li>
+									<hr class="dropdown-divider">
+								</li>
+								<li><a class="dropdown-item" href="{% url 'customer_login' %}">Login</a></li>
+								<li><a class="dropdown-item" href="{% url 'customer_register' %}">Register</a></li>
+								<li><a class="dropdown-item" href="{% url 'reset-password' %}">Password</a></li>
+							</ul>
+						  </li>
+						  						  
+						  <li class="nav-item">
+							<a class="nav-link" href="{% url 'about' %}">About</a>
+						  </li>
+						  
+						  <li class="nav-item">
+							<a class="nav-link" href="{% url 'contact' %}">Contact</a>
+						  </li>
+						</ul>
+					  </div>
+					</div>	
+				  </nav>
+			</div>
+		</div>
+		<!--end top header wrapper-->
+
+
+		{% block main-content %}
+		
+		{% endblock main-content%}
+
+
+		<footer>
+			<section class="py-5 border-top bg-light">
+				<div class="container">
+					<div class="row row-cols-1 row-cols-lg-2 row-cols-xl-4">
+						<div class="col">
+							<div class="footer-section1">
+								<h5 class="mb-4 text-uppercase fw-bold">Contact Info</h5>
+								<div class="address mb-3">
+									<h6 class="mb-0 text-uppercase fw-bold">Address</h6>
+									<p class="mb-0">123 Street Name, City, Australia</p>
+								</div>
+								<div class="phone mb-3">
+									<h6 class="mb-0 text-uppercase fw-bold">Phone</h6>
+									<p class="mb-0">Toll Free (123) 472-796</p>
+									<p class="mb-0">Mobile : +91-9910XXXX</p>
+								</div>
+								<div class="email mb-3">
+									<h6 class="mb-0 text-uppercase fw-bold">Email</h6>
+									<p class="mb-0">mail@example.com</p>
+								</div>
+								<div class="working-days mb-3">
+									<h6 class="mb-0 text-uppercase fw-bold">WORKING DAYS</h6>
+									<p class="mb-0">Mon - FRI / 9:30 AM - 6:30 PM</p>
+								</div>
+							</div>
+						</div>
+						<div class="col">
+							<div class="footer-section2">
+								<h5 class="mb-4 text-uppercase fw-bold">Categories</h5>
+								<ul class="list-unstyled">
+									{% for category in categories %}
+										<li class="mb-1">
+											<a href="{% url 'produc_category_view' category.slug %}" class="text-dark text-decoration-none">
+												<i class='bx bx-chevron-right'></i> {{ category.name }}
+											</a>
+										</li>
+									{% empty %}
+										<li>No categories available</li>
+									{% endfor %}
+								</ul>
+
+							</div>
+						</div>
+						<div class="col">
+							<div class="footer-section3">
+								<h5 class="mb-4 text-uppercase fw-bold">Popular Tags</h5>
+								<div class="tags-box d-flex flex-wrap gap-2">
+									<!-- <a href="" class="btn btn-ecomm btn-outline-dark">Cloths</a> -->
+									{% for tag in tags %}
+                                        <a href="{% url 'produc_tag_view' tag.slug %}"  class="btn btn-ecomm btn-outline-dark">{{ tag.name }}</a>
+                                    {% endfor %}
+								</div>
+							</div>
+						</div>
+						<div class="col">
+							<div class="footer-section4">
+								<h5 class="mb-4 text-uppercase fw-bold">Stay informed</h5>
+								<div class="subscribe">
+									<input type="text" class="form-control" placeholder="Enter Your Email" />
+									<div class="mt-3 d-grid">
+										<a href="javascript:;" class="btn btn-dark btn-ecomm">Subscribe</a>
+									</div>
+									<p class="mt-3 mb-0">Subscribe to our newsletter to receive early discount offers, updates and new products info.</p>
+								</div>
+								<div class="download-app mt-3">
+									<h6 class="mb-3 text-uppercase fw-bold">Download our app</h6>
+									<div class="d-flex align-items-center gap-2">
+										<a href="javascript:;">
+											<img src="{% static 'assets/images/icons/apple-store.png' %}" class="" width="140" alt="" />
+										</a>
+										<a href="javascript:;">
+											<img src="{% static 'assets/images/icons/play-store.png' %}" class="" width="140" alt="" />
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!--end row-->
+				</div>
+			</section>
+
+			<section class="footer-strip text-center py-3 border-top positon-absolute bottom-0">
+				<div class="container">
+					<div class="d-flex flex-column flex-lg-row align-items-center gap-3 justify-content-between">
+						<p class="mb-0">Copyright © 2022. All right reserved.</p>
+						<div class="payment-icon">
+							<div class="row row-cols-auto g-2 justify-content-end">
+								<div class="col">
+									<img src="{% static 'assets/images/icons/visa.png' %}" alt="" />
+								</div>
+								<div class="col">
+									<img src="{% static 'assets/images/icons/paypal.png' %}" alt="" />
+								</div>
+								<div class="col">
+									<img src="{% static 'assets/images/icons/mastercard.png' %}" alt="" />
+								</div>
+								<div class="col">
+									<img src="{% static 'assets/images/icons/american-express.png' %}" alt="" />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</footer>
+		<!--end footer section-->
+
+
+		<!--start quick view product-->
+		<!-- Modal -->
+		<div class="modal fade" id="QuickViewProduct">
+			<div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-xl-down">
+				<div class="modal-content rounded-0 border-0" id="quickViewContent">
+					<!-- product details will load here dynamically -->
+				</div>
+			</div>
+		</div>
+
+		<!--end quick view product-->
+		<!--Start Back To Top Button--> <a href="javaScript:;" class="back-to-top"><i class='bx bxs-up-arrow-alt'></i></a>
+		<!--End Back To Top Button-->
+	</div>
+	<!--end wrapper-->
+	<script>
+document.addEventListener("DOMContentLoaded", function() {
+	const quickViewButtons = document.querySelectorAll(".quick-view-btn");
+
+	quickViewButtons.forEach(button => {
+		button.addEventListener("click", function() {
+			const slug = this.getAttribute("data-slug");
+			const modalContent = document.getElementById("quickViewContent");
+
+			// Loading animation
+			modalContent.innerHTML = `
+				<div class="p-5 text-center">
+					<div class="spinner-border text-dark" role="status"></div>
+					<p class="mt-3 mb-0">Loading...</p>
+				</div>
+			`;
+
+			// Fetch product quick view HTML
+			fetch(`/quick-view/${slug}/`)
+				.then(response => response.json())
+				.then(data => {
+					modalContent.innerHTML = data.html;
+
+					// Initialize Owl Carousel
+					setTimeout(() => {
+						$('.product-gallery').owlCarousel({
+							items: 1,
+							loop: true,
+							dots: false,
+							nav: false,
+							navText: [
+								'<i class="bx bx-chevron-left"></i>',
+								'<i class="bx bx-chevron-right"></i>'
+							],
+							thumbs: true,
+							thumbsPrerendered: true,
+							autoplay: false,
+						});
+					}, 100);
+
+					// ✅ Initialize color selection
+					initializeQuickViewColorSelection();
+				})
+				.catch(error => {
+					console.error("Quick view error:", error);
+					modalContent.innerHTML = `
+						<div class="p-5 text-center text-danger">
+							Failed to load product details. Try again later.
+						</div>
+					`;
+				});
+		});
+	});
+
+	// ===============================
+	// ✅ Color selection initializer
+	// ===============================
+	function initializeQuickViewColorSelection() {
+		const colorItems = document.querySelectorAll('.color-indigator-item');
+		const colorInput = document.getElementById('selectedColorInput');
+		if (!colorItems.length || !colorInput) return;
+
+		colorItems.forEach(item => {
+			item.addEventListener('click', function() {
+				// Reset all
+				colorItems.forEach(c => {
+					c.style.border = '2px solid #ddd';
+					c.classList.remove('selected');
+				});
+
+				// Highlight selected
+				this.style.border = '3px solid #000';
+				this.classList.add('selected');
+
+				// Set hidden color input
+				colorInput.value = this.dataset.color;
+				console.log("Selected color:", colorInput.value); // optional debug
+			});
+		});
+	}
+});
+
+function removeCartItem(el) {
+    const itemId = el.dataset.itemId;
+    fetch(`/remove-cart-item/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Option 1: remove the HTML of the item
+            el.closest('.dropdown-item, .row').remove();
+
+            // Option 2: update cart total badge
+            document.querySelectorAll('.alert-count').forEach(el => el.textContent = data.cart_total_items);
+
+            // Option 3: update subtotal in mini-cart
+            document.querySelectorAll('.cart-footer h5.ms-auto').forEach(el => el.textContent = `$${data.cart_subtotal}`);
+        } else {
+            alert("Failed to remove item.");
+        }
+    });
+}
+
+
+</script>
+
+
+	
+	<script src="{% static 'assets/js/jquery.min.js' %}"></script>
+	
+	<!-- Bootstrap JS -->
+	<script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+	<!--plugins-->
+	
+	<script src="{% static 'assets/plugins/OwlCarousel/js/owl.carousel.min.js' %}"></script>
+	<script src="{% static 'assets/plugins/OwlCarousel/js/owl.carousel2.thumbs.min.js' %}"></script>
+	<script src="{% static 'assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js' %}"></script>
+	<!--app JS-->
+	<script src="{% static 'assets/js/product_actions.js' %}"></script>
+	<script src="{% static 'assets/js/app.js' %}"></script>
+	<script src="{% static 'assets/js/index.js' %}"></script>
+	<script src="{% static 'assets/js/product-details.js' %}"></script>
+
+	
+</body>
+
+</html>

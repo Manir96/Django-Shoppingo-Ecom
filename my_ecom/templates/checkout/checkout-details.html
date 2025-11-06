@@ -1,0 +1,295 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Checkout Details{% endblock title %}
+{% block main-content %}
+	<!--start page wrapper -->
+	<div class="page-wrapper">
+		<div class="page-content">
+			<!--start breadcrumb-->
+			<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
+				<div class="container">
+					<div class="page-breadcrumb d-flex align-items-center">
+						<h3 class="breadcrumb-title pe-3">Checkout</h3>
+						<div class="ms-auto">
+							<nav aria-label="breadcrumb">
+								<ol class="breadcrumb mb-0 p-0">
+									<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
+									</li>
+									<li class="breadcrumb-item"><a href="javascript:;">Shop</a>
+									</li>
+									<li class="breadcrumb-item active" aria-current="page">Checkout</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!--end breadcrumb-->
+			<!--start shop cart-->
+
+
+			<section class="py-4">
+				<div class="container">
+					<div class="shop-cart">
+						<div class="row">
+							<!-- Left Column: User & Shipping Info -->
+							<div class="col-12 col-xl-8">
+								<div class="checkout-details">
+
+									<!-- Steps -->
+									<div class="card bg-transparent rounded-0 shadow-none">
+										<div class="card-body">
+											<div class="steps steps-light">
+												<a class="step-item active" href="{% url 'shopping-cart' %}">
+													<div class="step-progress"><span class="step-count">1</span></div>
+													<div class="step-label"><i class='bx bx-cart'></i>Cart</div>
+												</a>
+												<a class="step-item active current" href="{% url 'checkout-details' %}">
+													<div class="step-progress"><span class="step-count">2</span></div>
+													<div class="step-label"><i class='bx bx-user-circle'></i>Details</div>
+												</a>
+												<a class="step-item" href="{% url 'checkout-shipping' %}">
+													<div class="step-progress"><span class="step-count">3</span></div>
+													<div class="step-label"><i class='bx bx-cube'></i>Shipping</div>
+												</a>
+												<a class="step-item" href="{% url 'checkout-payment' %}">
+													<div class="step-progress"><span class="step-count">4</span></div>
+													<div class="step-label"><i class='bx bx-credit-card'></i>Payment</div>
+												</a>
+												<a class="step-item" href="{% url 'checkout-review' %}">
+													<div class="step-progress"><span class="step-count">5</span></div>
+													<div class="step-label"><i class='bx bx-check-circle'></i>Review</div>
+												</a>
+											</div>
+										</div>
+									</div>
+
+									<!-- User & Address -->
+									<div class="card rounded-0">
+										<div class="card-body">
+											<div class="d-flex align-items-center mb-3">
+												<div>
+													<img src="{% static 'assets/images/avatars/avatar-1.png' %}" width="90" alt="" class="rounded-circle p-1 border">
+												</div>
+												<div class="ms-2">
+													<h6 class="mb-0">{{ request.user.first_name|default:"Guest User" }}</h6>
+													<p class="mb-0">{{ request.user.email }}</p>
+												</div>
+												<div class="ms-auto">
+													<a href="javascript:;" class="btn btn-light btn-ecomm">
+														<i class='bx bx-edit'></i> Edit Profile
+													</a>
+												</div>
+											</div>
+
+											<!-- Shipping Address -->
+											<div class="border p-3">
+												<h2 class="h5 mb-0">Shipping Address</h2>
+												<div class="my-3 border-bottom"></div>
+												<form method="POST" action="{% url 'checkout-shipping' %}" class="row g-3">
+													{% csrf_token %}
+													<div class="col-md-6">
+														<label class="form-label">First Name</label>
+														<input type="text" class="form-control rounded-0" name="first_name" value="{{ request.user.first_name }}">
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">Last Name</label>
+														<input type="text" class="form-control rounded-0" name="last_name" value="{{ request.user.last_name }}">
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">E-mail</label>
+														<input type="email" class="form-control rounded-0" name="email" value="{{ request.user.email }}">
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">Phone Number</label>
+														<input type="text" class="form-control rounded-0" name="phone">
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">Country</label>
+														<select class="form-select rounded-0" name="country_id">
+															<option value="">-- Select Country --</option>
+															{% for country in country_name %}
+																<option value="{{ country.id }}" {% if shipping_info.country_id == country.id|stringformat:"s" %}selected{% endif %}>{{ country.nameName }}</option>
+															{% endfor %}
+														</select>
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">Division</label>
+														<input type="text" class="form-control rounded-0" name="division_id"
+															value="{{ division_display|default_if_none:'' }}">
+													</div>
+
+													<div class="col-md-6">
+														<label class="form-label">District</label>
+														<input type="text" class="form-control rounded-0" name="district_id"
+															value="{{ district_display|default_if_none:'' }}">
+													</div>
+
+													<div class="col-md-6">
+														<label class="form-label">Zip/Postal Code</label>
+														<input type="text" class="form-control rounded-0" name="zip_code" value="{{ shipping_info.zip_code }}">
+													</div>
+													<div class="col-md-6">
+														<label class="form-label">Address 1 (Shipping)</label>
+														<textarea class="form-control rounded-0" id="address1" name="address1"
+															placeholder="Enter your shipping address"></textarea>
+													</div>
+
+													<div class="col-md-6">
+														<label class="form-label">Address 2 (Billing)</label>
+														<textarea class="form-control rounded-0" id="address2" name="address2"
+															placeholder="Enter your billing address"></textarea>
+													</div>
+
+													<div class="col-md-12">
+														<h6 class="mb-0 h5">Billing Address</h6>
+														<div class="my-3 border-bottom"></div>
+														<div class="form-check">
+															<input class="form-check-input" type="checkbox" id="sameAsShipping" checked>
+															<label class="form-check-label" for="sameAsShipping">
+																Same as shipping address
+															</label>
+														</div>
+													</div>
+
+													<div class="col-md-6">
+														<div class="d-grid">
+															<a href="{% url 'shopping-cart' %}" class="btn btn-light btn-ecomm">
+																<i class='bx bx-chevron-left'></i> Back to Cart
+															</a>
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="d-grid">
+															<button type="submit" class="btn btn-dark btn-ecomm">
+																Proceed to Shipping <i class='bx bx-chevron-right'></i>
+															</button>
+														</div>
+													</div>
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Right Column: Order Summary -->
+							<div class="col-12 col-xl-4">
+								<div class="order-summary">
+									<div class="card rounded-0">
+										<div class="card-body">
+
+											<!-- Coupon Section -->
+											<div class="card rounded-0 border bg-transparent shadow-none mb-3">
+												<div class="card-body">
+													<p class="fs-5 mb-3">Apply Discount Code</p>
+
+													{% if request.session.coupon_code %}
+														<div class="alert alert-success py-2 mb-2">
+															<strong>Coupon Applied:</strong> {{ request.session.coupon_code }} <br>
+															Discount: ${{ request.session.coupon_discount|floatformat:2 }}
+														</div>
+														<form method="POST" action="{% url 'remove_coupon' %}">
+															{% csrf_token %}
+															<button class="btn btn-outline-danger btn-sm" type="submit">Remove Coupon</button>
+														</form>
+													{% else %}
+														<form method="POST" action="{% url 'apply_coupon' %}">
+															{% csrf_token %}
+															<div class="input-group">
+																<input type="text" name="coupon_code" class="form-control rounded-0" placeholder="Enter discount code" required>
+																<button class="btn btn-dark btn-ecomm" type="submit">Apply</button>
+															</div>
+														</form>
+													{% endif %}
+												</div>
+											</div>
+
+											<!-- Order Summary List -->
+											<div class="card rounded-0 border bg-transparent shadow-none">
+												{% for cart_item in cart_items_base %}
+												<div class="d-flex align-items-center mb-2">
+													<a class="d-block flex-shrink-0" href="{% url 'product-detail' cart_item.item.product.slug %}">
+														<img src="{{ cart_item.item.product.images.first.image.url }}" width="75" alt="{{ cart_item.item.product.title }}">
+													</a>
+													<div class="ps-2 flex-grow-1">
+														<h6 class="mb-1">
+															<a href="{% url 'product-detail' cart_item.item.product.slug %}" class="text-dark">
+																{{ cart_item.item.product.title }}
+															</a>
+														</h6>
+														<div class="widget-product-meta">
+															<span class="me-2">${{ cart_item.item.product.orginal_price|floatformat:2 }}</span>
+															<span>x {{ cart_item.item.quantity }} = ${{ cart_item.item_total|floatformat:2 }}</span>
+														</div>
+													</div>
+												</div>
+												{% endfor %}
+
+
+											</div>
+
+											<!-- Totals -->
+											<div class="card rounded-0 border bg-transparent mb-0 shadow-none">
+												<div class="card-body">
+													<p class="mb-2">Subtotal: <span class="float-end">${{ subtotal|floatformat:2 }}</span></p>
+													<p class="mb-2">Shipping: <span class="float-end">${{ shipping_amount|floatformat:2 }}</span></p>
+													<p class="mb-2">
+														Coupon Discount:
+														<span class="float-end {% if coupon_discount > 0 %}text-success{% endif %}">
+															- ${{ coupon_discount|floatformat:2 }}
+														</span>
+													</p>
+													<div class="my-3 border-top"></div>
+													<h5 class="mb-0">Order Total: <span class="float-end">${{ order_total|floatformat:2 }}</span></h5>
+												</div>
+											</div>
+
+										</div>
+									</div>
+
+								</div>
+							</div>
+						</div>
+						<!--end row-->
+					</div>
+				</div>
+			</section>
+
+			<!--end shop cart-->
+		</div>
+	</div>
+	<!--end page wrapper -->
+
+
+	<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const sameAsShipping = document.getElementById("sameAsShipping");
+    const address1 = document.getElementById("address1");
+    const address2 = document.getElementById("address2");
+
+    // Function to copy address
+    function copyAddress() {
+        if (sameAsShipping.checked) {
+            address2.value = address1.value;
+            address2.readOnly = true; // lock editing
+        } else {
+            address2.readOnly = false; // allow editing
+        }
+    }
+
+    // When checkbox is toggled
+    sameAsShipping.addEventListener("change", copyAddress);
+
+    // When address1 changes and checkbox is checked
+    address1.addEventListener("input", function () {
+        if (sameAsShipping.checked) {
+            address2.value = address1.value;
+        }
+    });
+
+    // Initialize on load
+    copyAddress();
+});
+</script>
+{% endblock main-content %}

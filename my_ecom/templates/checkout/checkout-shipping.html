@@ -1,0 +1,311 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Checkout Shipping{% endblock title %}
+{% block main-content %}
+		<!--start page wrapper -->
+		<div class="page-wrapper">
+			<div class="page-content">
+				<!--start breadcrumb-->
+				<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
+					<div class="container">
+						<div class="page-breadcrumb d-flex align-items-center">
+							<h3 class="breadcrumb-title pe-3">Checkout</h3>
+							<div class="ms-auto">
+								<nav aria-label="breadcrumb">
+									<ol class="breadcrumb mb-0 p-0">
+										<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
+										</li>
+										<li class="breadcrumb-item"><a href="javascript:;">Shop</a>
+										</li>
+										<li class="breadcrumb-item active" aria-current="page">Checkout</li>
+									</ol>
+								</nav>
+							</div>
+						</div>
+					</div>
+				</section>
+				<!--end breadcrumb-->
+				<!--start shop cart-->
+				<section class="py-4">
+					<div class="container">
+						<div class="shop-cart">
+							<div class="row">
+								<div class="col-12 col-xl-8">
+									<div class="checkout-shipping">
+										<div class="card bg-transparent rounded-0 shadow-none">
+											<div class="card-body">
+												<div class="steps steps-light">
+													<a class="step-item active" href="{% url 'shopping-cart' %}">
+														<div class="step-progress"><span class="step-count">1</span>
+														</div>
+														<div class="step-label"><i class='bx bx-cart'></i>Cart</div>
+													</a>
+													<a class="step-item active" href="{% url 'checkout-details' %}">
+														<div class="step-progress"><span class="step-count">2</span>
+														</div>
+														<div class="step-label"><i class='bx bx-user-circle'></i>Details</div>
+													</a>
+													<a class="step-item active current" href="{% url 'checkout-shipping' %}">
+														<div class="step-progress"><span class="step-count">3</span>
+														</div>
+														<div class="step-label"><i class='bx bx-cube'></i>Shipping</div>
+													</a>
+													<a class="step-item" href="{% url 'checkout-payment' %}">
+														<div class="step-progress"><span class="step-count">4</span>
+														</div>
+														<div class="step-label"><i class='bx bx-credit-card'></i>Payment</div>
+													</a>
+													<a class="step-item" href="{% url 'checkout-review' %}">
+														<div class="step-progress"><span class="step-count">5</span>
+														</div>
+														<div class="step-label"><i class='bx bx-check-circle'></i>Review</div>
+													</a>
+												</div>
+											</div>
+										</div>
+										<form method="POST" action="{% url 'checkout-shipping' %}">
+											{% csrf_token %}
+
+											<table class="table" name="shipping_method">
+												<thead class="table-light">
+													<tr>
+														<th>Select</th>
+														<th>Method</th>
+														<th>Country</th>
+														<th>Division</th>
+														<th>Time</th>
+														<th>Fee</th>
+													</tr>
+												</thead>
+												<tbody>
+													{% for method in shipping_methods %}
+													<tr>
+														<td>
+															<input type="radio" class="shipping-option"
+																data-fee="{{ method.charge_amount|floatformat:2 }}"
+																name="shipping_method"
+																value="{{ method.id }}"
+																required>
+														</td>
+														<td>{{ method.Shipping_type_name }}</td>
+														<td>{{ method.country }}</td>
+														<td>{{ method.division }}</td>
+														<td>{{ method.delivery_time|default:"--" }}</td>
+														<td>${{ method.charge_amount }}</td>
+													</tr>
+													{% endfor %}
+												</tbody>
+											</table>
+
+											<button type="submit" class="btn btn-dark rounded-0 mt-3">
+												Continue to Payment <i class="bx bx-chevron-right"></i>
+											</button>
+										</form>
+
+										<!-- <form method="POST" action="{% url 'checkout-payment' %}">
+											{% csrf_token %}
+											<div class="card rounded-0 shadow-none">
+												<div class="card-body">
+													<h2 class="h5 mb-0">Choose Shipping Method</h2>
+													<div class="my-3 border-bottom"></div>
+													<div class="table-responsive">
+														<table class="table" name="shipping_method">
+															<thead class="table-light">
+																<tr>
+																	<th>Select</th>
+																	<th>Method</th>
+																	<th>Country</th>
+																	<th>Division</th>
+																	<th>Time</th>
+																	<th>Fee</th>
+																</tr>
+															</thead>
+															<tbody>
+																{% for method in shipping_methods %}
+																<tr>
+																	<td>
+																		<input type="radio" class="shipping-option"
+																		data-fee="{{ method.charge_amount|floatformat:2 }}"
+																		name="shipping_method"
+																		value="{{ method.id }}"
+																		required>
+																	</td>
+																	<td>{{ method.Shipping_type_name }}</td>
+																	<td>{{ method.country }}</td>
+																	<td>{{ method.division }}</td>
+																	<td>{{ method.delivery_time|default:"--" }}</td>
+																	<td>${{ method.charge_amount }}</td>
+																</tr>
+																{% endfor %}
+															</tbody>
+														</table>
+													</div>
+													<button type="submit" class="btn btn-dark rounded-0 mt-3">
+														Continue to Payment <i class="bx bx-chevron-right"></i>
+													</button>
+												</div>
+											</div>
+										</form> -->
+										<div class="card rounded-0 shadow-none">
+											<div class="card-body">
+												<div class="row">
+													<div class="col-md-6">
+														<div class="d-grid">
+															<a href="javascript:;" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Details</a>
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="d-grid">
+															<a href="javascript:;" class="btn btn-dark btn-ecomm">Proceed to Payment<i class="bx bx-chevron-right"></i></a>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-12 col-xl-4">
+									<div class="order-summary">
+										<div class="card rounded-0">
+											<div class="card-body">
+												<div class="card rounded-0 border bg-transparent shadow-none">
+													<div class="card-body">
+														<p class="fs-5 mb-3">Apply Discount Code</p>
+
+														{% if request.session.coupon_code %}
+															<div class="alert alert-success py-2 mb-2">
+																<strong>Coupon Applied:</strong> {{ request.session.coupon_code }} <br>
+																Discount: ${{ request.session.coupon_discount|floatformat:2 }}
+															</div>
+															<form method="POST" action="{% url 'remove_coupon' %}">
+																{% csrf_token %}
+																<button class="btn btn-outline-danger btn-sm" type="submit">Remove Coupon</button>
+															</form>
+														{% else %}
+															<form method="POST" action="{% url 'apply_coupon' %}">
+																{% csrf_token %}
+																<div class="input-group">
+																	<input type="text" name="coupon_code" class="form-control rounded-0" placeholder="Enter discount code" required>
+																	<button class="btn btn-dark btn-ecomm" type="submit">Apply</button>
+																</div>
+															</form>
+														{% endif %}
+													</div>
+												</div>
+												<div class="card rounded-0 border bg-transparent shadow-none">
+													<div class="card-body" name="order_summary">
+														<p class="fs-5">Order summary</p>
+														<div class="my-3 border-top"></div>
+
+														{% for cart_item in cart_items_base %}
+														<div class="d-flex align-items-center mb-2">
+															<a class="d-block flex-shrink-0" href="{% url 'product-detail' cart_item.item.product.slug %}">
+																<img src="{{ cart_item.item.product.images.first.image.url }}" width="75" alt="{{ cart_item.item.product.title }}">
+															</a>
+															<div class="ps-2 flex-grow-1">
+																<h6 class="mb-1">
+																	<a href="{% url 'product-detail' cart_item.item.product.slug %}" class="text-dark">
+																		{{ cart_item.item.product.title }}
+																	</a>
+																</h6>
+																<div class="widget-product-meta">
+																	<span class="me-2">${{ cart_item.item.product.orginal_price|floatformat:2 }}</span>
+																	<span>x {{ cart_item.item.quantity }} = ${{ cart_item.item_total|floatformat:2 }}</span>
+																</div>
+															</div>
+														</div>
+
+														<div class="my-3 border-top"></div>
+														{% endfor %}
+													</div>
+
+												</div>
+												<div class="card rounded-0 border bg-transparent mb-0 shadow-none">
+													<div class="card-body">
+														<p class="mb-2">
+															Subtotal:
+															<span class="float-end">
+																${{ subtotal|floatformat:2 }}
+															</span>
+														</p>
+
+														<p class="mb-2">
+															Shipping:
+															<span class="float-end" id="shipping_display">
+																{% if shipping_amount %}
+																	${{ shipping_amount|floatformat:2 }}
+																{% else %}
+																	100.00
+																{% endif %}
+															</span>
+														</p>
+
+														<p class="mb-0">
+															Discount:
+															<span class="float-end {% if coupon_discount > 0 %}text-success{% endif %}">
+																{% if coupon_discount %}
+																	- ${{ coupon_discount|floatformat:2 }}
+																{% else %}
+																	--
+																{% endif %}
+															</span>
+														</p>
+
+														<div class="my-3 border-top"></div>
+
+														<h5 class="mb-0">
+															Order Total:
+															<span class="float-end" id="order_total_display">
+																{% if order_total %}
+																	${{ order_total|floatformat:2 }}
+																{% else %}
+																	--
+																{% endif %}
+															</span>
+														</h5>
+													</div>
+
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!--end row-->
+						</div>
+					</div>
+				</section>
+				<!--end shop cart-->
+			</div>
+		</div>
+		<!--end page wrapper -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll(".shipping-option");
+    const shippingDisplay = document.getElementById("shipping_display");
+    const totalDisplay = document.getElementById("order_total_display");
+
+    const subtotal = parseFloat("{{ subtotal|floatformat:2 }}") || 0;
+    const discount = parseFloat("{{ coupon_discount|default:0 }}") || 0;
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            const fee = parseFloat(this.dataset.fee) || 0;
+
+            // Show Shipping Fee
+            shippingDisplay.textContent = "$" + fee.toFixed(2);
+
+            // Calculate Total
+            const total = subtotal + fee - discount;
+            totalDisplay.textContent = "$" + total.toFixed(2);
+        });
+    });
+});
+
+
+
+</script>
+
+
+{% endblock main-content %}
