@@ -28,52 +28,70 @@
 			<!--start shop cart-->
 			<section class="py-4">
 				<div class="container">
-					<h6 class="mb-0">Order ID: OD45345345435</h6>
+					<h6 class="mb-0">Order ID: {{ order_data.tracking_id }}</h6>
 					<hr>
+
 					<div class="row row-cols-1 row-cols-lg-4 rounded-4 gx-3 m-0 border">
 						<div class="col p-4 text-center border-end">
 							<h6 class="mb-1">Estimated Delivery time:</h6>
-							<p class="mb-0">24 Apr 2021</p>
+							<p class="mb-0">{{ order_data.completed_at|date:"d M Y" }}</p>
 						</div>
+
 						<div class="col p-4 text-center border-end">
 							<h6 class="mb-1">Shipping BY:</h6>
-							<p class="mb-0">BLUEDART | +91-9910XXXX</p>
+							<p class="mb-0">
+								{{ order_data.payment_method }} |
+								{{ order_data.shipping_address.phone }}
+							</p>
 						</div>
+
 						<div class="col p-4 text-center border-end">
 							<h6 class="mb-1">Status:</h6>
-							<p class="mb-0">Picked by the courier</p>
+							<p class="mb-0">
+								{% if order_data.order.order_status %}
+									{{ order_data.order.order_status.get_status_display }}
+								{% else %}
+									Order Confirmed
+								{% endif %}
+							</p>
 						</div>
+
 						<div class="col p-4 text-center">
 							<h6 class="mb-1">Tracking #:</h6>
-							<p class="mb-0">BD045903594059</p>
+							<p class="mb-0">{{ order_data.tracking_id }}</p>
 						</div>
 					</div>
+
+					
+
 					<!--end row-->
 					<div class="mt-3"></div>
 					<div class="checkout-payment">
 						<div class="card bg-transparent rounded-0 shadow-none">
 							<div class="card-body">
 								<div class="steps steps-light">
-									<a class="step-item active" href="javascript:;">
-										<div class="step-progress"><span class="step-count"><i class='bx bx-check'></i></span>
-										</div>
+									{% with status=order_data.order.order_status.status %}
+									<a class="step-item {% if status in 'confirmed picked onway ready' %}active{% endif %}">
+										<div class="step-progress"><span class="step-count"><i class='bx bx-check'></i></span></div>
 										<div class="step-label">Order confirmed</div>
 									</a>
-									<a class="step-item active" href="javascript:;">
-										<div class="step-progress"><span class="step-count"><i class='bx bx-user-circle' ></i></span>
-										</div>
+
+									<a class="step-item {% if status in 'picked onway ready' %}active{% endif %}">
+										<div class="step-progress"><span class="step-count"><i class='bx bx-user-circle'></i></span></div>
 										<div class="step-label">Picked by courier</div>
 									</a>
-									<a class="step-item" href="javascript:;">
-										<div class="step-progress"><span class="step-count"><i class='bx bx-car'></i></span>
-										</div>
+
+									<a class="step-item {% if status in 'onway ready' %}active{% endif %}">
+										<div class="step-progress"><span class="step-count"><i class='bx bx-car'></i></span></div>
 										<div class="step-label">On the way</div>
 									</a>
-									<a class="step-item" href="javascript:;">
-										<div class="step-progress"><span class="step-count"><i class='bx bx-planet'></i></span>
-										</div>
+
+									<a class="step-item {% if status == 'ready' %}active{% endif %}">
+										<div class="step-progress"><span class="step-count"><i class='bx bx-planet'></i></span></div>
 										<div class="step-label">Ready for pickup</div>
 									</a>
+									{% endwith %}
+
 								</div>
 							</div>
 						</div>

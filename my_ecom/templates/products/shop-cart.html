@@ -146,7 +146,7 @@
 											<h5 class="mb-0">Order Total: <span class="float-end">${{ cart_order_total|floatformat:2 }}</span></h5>
 											<div class="my-4"></div>
 											<div class="d-grid">
-												<form method="POST" action="{% url 'checkout-details' %}">
+												<form method="POST" action="{% url 'shopping-cart' %}" id="checkout-form">
 													{% csrf_token %}
 													<input type="hidden" name="country_id" id="country_id_field">
 													<input type="hidden" name="division_id" id="division_id_field">
@@ -173,7 +173,7 @@
 		</div>
 	</div>
 	<!--end page wrapper -->
-	<script>
+	<!-- <script>
 		document.addEventListener('DOMContentLoaded', function () {
 			const quantityInputs = document.querySelectorAll('.cart-action input[type="number"]');
 
@@ -273,7 +273,109 @@ const form = document.querySelector('form[action*="checkout-details"]');
     document.getElementById('zip_code_field').value = document.querySelector('input[placeholder="Enter your Zip/Postal code"]').value;
   });
 
-	</script>
+	</script> -->
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // --- quantity update AJAX (তোমার আগের কোড সংরক্ষিত) ---
+  const quantityInputs = document.querySelectorAll('.cart-action input[type="number"]');
+  quantityInputs.forEach(input => {
+    input.addEventListener('change', function () {
+      const itemId = this.dataset.itemId;
+      let quantity = parseInt(this.value) || 1;
+      if (quantity < 1) quantity = 1;
+
+      const formData = new FormData();
+      formData.append('item_id', itemId);
+      formData.append('quantity', quantity);
+
+      fetch("{% url 'update_cart_quantity' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const itemRow = input.closest('.row');
+          const itemTotalEl = itemRow.querySelector('h5');
+          if (itemTotalEl) itemTotalEl.textContent = `ItemTotal: $${data.item_total}`;
+          const cartSubtotalEl = document.querySelector('#cart-subtotal');
+          if(cartSubtotalEl) cartSubtotalEl.textContent = `$${data.cart_subtotal}`;
+          document.querySelectorAll('.alert-count').forEach(el => el.textContent = data.cart_total_items);
+        }
+      });
+    });
+  });
+
+  // --- country/division/district dynamic loading (তোমার আগের কোড) ---
+  const countrySelect = document.getElementById("country-select");
+  const divisionSelect = document.getElementById("division-select");
+  const districtSelect = document.getElementById("district-select");
+
+  if (countrySelect) {
+    countrySelect.addEventListener("change", function() {
+      const countryId = this.value;
+      divisionSelect.innerHTML = '<option value="">-- Select Division --</option>';
+      districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+      if (countryId) {
+        fetch(`/ajax/get-divisions/?country_id=${countryId}`)
+          .then(res => res.json())
+          .then(data => {
+            data.forEach(div => {
+              const option = document.createElement("option");
+              option.value = div.id;
+              option.textContent = div.division_name;
+              divisionSelect.appendChild(option);
+            });
+          });
+      }
+    });
+  }
+
+  if (divisionSelect) {
+    divisionSelect.addEventListener("change", function() {
+      const divisionId = this.value;
+      districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+      if (divisionId) {
+        fetch(`/ajax/get-districts/?division_id=${divisionId}`)
+          .then(res => res.json())
+          .then(data => {
+            data.forEach(dist => {
+              const option = document.createElement("option");
+              option.value = dist.id;
+              option.textContent = dist.district_name;
+              districtSelect.appendChild(option);
+            });
+          });
+      }
+    });
+  }
+
+  // --- Checkout form: ensure hidden inputs are set before submit ---
+  const checkoutForm = document.getElementById('checkout-form');
+  if (checkoutForm) {
+    checkoutForm.addEventListener('submit', function (e) {
+      // fill hidden fields from selects/inputs
+      const countryVal = (document.getElementById('country-select') || {}).value || '';
+      const divisionVal = (document.getElementById('division-select') || {}).value || '';
+      const districtVal = (document.getElementById('district-select') || {}).value || '';
+      const zipVal = (document.querySelector('input[placeholder="Enter your Zip/Postal code"]') || {}).value || '';
+
+      document.getElementById('country_id_field').value = countryVal;
+      document.getElementById('division_id_field').value = divisionVal;
+      document.getElementById('district_id_field').value = districtVal;
+      document.getElementById('zip_code_field').value = zipVal;
+
+      // allow normal submit to proceed (no preventDefault)
+      // small defensive check: if you want to block submit when cart empty or country missing, you can check here
+    });
+  }
+
+});
+</script>
 
 {% endblock main-content %}

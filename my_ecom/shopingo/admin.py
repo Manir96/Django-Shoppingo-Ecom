@@ -71,7 +71,7 @@ class ProductAdmin(admin.ModelAdmin):
 # ===========================
 @admin.register(Variation)
 class VariationAdmin(admin.ModelAdmin):
-    list_display = ("product", "color", "size", "brand", "price", "discount_price", "stock")
+    list_display = ("product", "color", "size", "brand", "price", "discount_price", 'price_range', "stock")
     search_fields = ("product__title", "brand__name")
     list_filter = ("color", "size", "brand")
 
@@ -278,4 +278,28 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(CompletedOrder)
+class CompletedOrderAdmin(admin.ModelAdmin):
+    list_display = (
+        "tracking_id",
+        "order",
+        "total_amount",
+        "completed_at",
+    )
+    list_filter = ("completed_at",)
+    search_fields = ("tracking_id", "order__id", "shipping_address__first_name", "shipping_address__phone")
+    readonly_fields = ("tracking_id", "completed_at")
 
+    # Optional: ManyToMany field editable in admin
+    filter_horizontal = ("order_items",)
+
+
+@admin.register(OrderStatus)
+class OrderStatusAdmin(admin.ModelAdmin):
+    list_display = ('id', 'status', 'get_status_display_name')
+    list_filter = ('status',)
+    search_fields = ('status',)
+
+    def get_status_display_name(self, obj):
+        return dict(obj.STATUS_CHOICES).get(obj.status, "Unknown")
+    get_status_display_name.short_description = "Display Name"

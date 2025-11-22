@@ -32,69 +32,105 @@
 						<div class="col-12 col-xl-12">
 							<div class="product-wrapper">
 								<div class="toolbox d-lg-flex align-items-center mb-3 gap-2 p-3 bg-white border">
-									<div class="d-flex flex-wrap flex-grow-1 gap-1">
-										<div class="">
-											<select class="form-select rounded-0">
-												<option selected="selected">Size</option>
-												<option>Small</option>
-												<option>Small</option>
-												<option>Small</option>
-												<option>Extra Large</option>
-											</select>
+									<form method="get"
+										id="topToolboxForm"
+										class="toolbox d-lg-flex align-items-center mb-3 gap-2 p-3 bg-white border">
+
+										{# আগের sidebar ফিল্টার ধরে রাখতে hidden field ব্যবহার করছি #}
+										{% for cid in selected_category_ids %}
+											<input type="hidden" name="category" value="{{ cid }}">
+										{% endfor %}
+										{% for bid in selected_brand_ids %}
+											<input type="hidden" name="brand" value="{{ bid }}">
+										{% endfor %}
+										{% for colid in selected_color_ids %}
+											<input type="hidden" name="color" value="{{ colid }}">
+										{% endfor %}
+										<input type="hidden" name="min_price" value="{{ min_price }}">
+										<input type="hidden" name="max_price" value="{{ max_price }}">
+										<input type="hidden" name="discount" value="{{ selected_discount }}">
+										<input type="hidden" name="view" value="{{ view_type }}">
+
+										<div class="d-flex flex-wrap flex-grow-1 gap-1">
+											<!-- SIZE -->
+											<div>
+												<select class="form-select rounded-0"
+														name="size">
+													<option value="">Size</option>
+													{% for s in sizes %}
+														<option value="{{ s.id }}"
+															{% if selected_size|stringformat:'s' == s.id|stringformat:'s' %}selected{% endif %}>
+															{{ s.name }}
+														</option>
+													{% endfor %}
+												</select>
+											</div>
+
+											<!-- COLOR ( চাইলে static রাখতেই পারো, তবে DB থেকে নিলে ভাল ) -->
+											<div>
+												<select class="form-select rounded-0"
+														name="top_color">
+													<option value="">Color</option>
+													{% for c in colors %}
+														<option value="{{ c.id }}"
+															{% if top_color|stringformat:'s' == c.id|stringformat:'s' %}selected{% endif %}>
+															{{ c.name }}
+														</option>
+													{% endfor %}
+												</select>
+											</div>
+
+											<!-- PRICE RANGE -->
+											<div>
+												<select class="form-select rounded-0"
+														name="price_range">
+													<option value="">Price</option>
+													<option value="5-49"   {% if price_range == '5-49' %}selected{% endif %}>$5 to $49</option>
+													<option value="49-99"  {% if price_range == '49-99' %}selected{% endif %}>$49 to $99</option>
+													<option value="99-149" {% if price_range == '99-149' %}selected{% endif %}>$99 to $149</option>
+													<option value="149-300"{% if price_range == '149-300' %}selected{% endif %}>$149 to $300</option>
+													<option value="300-500"{% if price_range == '300-500' %}selected{% endif %}>$300 to $500</option>
+													<option value="1000+"  {% if price_range == '1000+' %}selected{% endif %}>Above $1000</option>
+												</select>
+											</div>
+
+											<!-- SORTING -->
+											<div class="d-flex align-items-center flex-nowrap">
+												<select class="form-select rounded-0"
+														name="sort">
+													<option value="" {% if not selected_sort %}selected{% endif %}>Default sorting</option>
+													<option value="newest"     {% if selected_sort == 'newest' %}selected{% endif %}>Sort by newness</option>
+													<option value="price_asc"  {% if selected_sort == 'price_asc' %}selected{% endif %}>Sort by price: low to high</option>
+													<option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>Sort by price: high to low</option>
+												</select>
+											</div>
+
+											<div>
+												<button type="submit"
+														class="btn btn-dark rounded-0 text-uppercase">
+													Search
+												</button>
+											</div>
 										</div>
-										<div class="">
-											<select class="form-select rounded-0">
-												<option selected="selected">Color</option>
-												<option>Red</option>
-												<option>Yellow</option>
-												<option>Black</option>
-												<option>White</option>
-												<option>Green</option>
-												<option>Blue</option>
-											</select>
+
+										<div class="d-flex flex-wrap">
+											<div class="d-flex align-items-center flex-nowrap">
+												<p class="mb-0 font-13 text-nowrap">Show:</p>
+												<select class="form-select ms-3 rounded-0"
+														name="per_page">
+													{% for n in per_page_list %}
+														<option value="{{ n }}" {% if per_page|stringformat:'s' == n|stringformat:'s' %}selected{% endif %}>
+															{{ n }}
+														</option>
+													{% endfor %}
+												</select>
+											</div>
 										</div>
-										<div class="">
-											<select class="form-select rounded-0">
-												<option selected="selected">Price</option>
-												<option>$5 to $49</option>
-												<option>$49 to $99</option>
-												<option>$99 to $149</option>
-												<option>$149 to $300</option>
-												<option>$300 to $500</option>
-												<option>Above $1000</option>
-											</select>
-										</div>
-										<div class="d-flex align-items-center flex-nowrap">
-											<select class="form-select rounded-0">
-												<option value="menu_order" selected="selected">Default sorting</option>
-												<option value="popularity">Sort by popularity</option>
-												<option value="rating">Sort by average rating</option>
-												<option value="date">Sort by newness</option>
-												<option value="price">Sort by price: low to high</option>
-												<option value="price-desc">Sort by price: high to low</option>
-											</select>
-										</div>
-										<div class="">
-											<button type="button" class="btn btn-dark rounded-0 text-uppercase">Search</button>
-										</div>
-									</div>
-									<div class="d-flex flex-wrap">
-										<div class="d-flex align-items-center flex-nowrap">
-											<p class="mb-0 font-13 text-nowrap text-white">Show:</p>
-											<select class="form-select ms-3 rounded-0">
-												<option>9</option>
-												<option>12</option>
-												<option>16</option>
-												<option>20</option>
-												<option>50</option>
-												<option>100</option>
-											</select>
-										</div>
-									</div>
-									<div><a href="?view=left" class="btn btn-dark rounded-0"><i class='bx bxs-grid me-0'></i></a>
-									</div>
-									<div><a href="?view=list" class="btn btn-light rounded-0"><i class='bx bx-list-ul me-0'></i></a>
-									</div>
+
+										<div><a href="?view=left" class="btn btn-dark rounded-0"><i class='bx bxs-grid me-0'></i></a></div>
+										<div><a href="?view=list" class="btn btn-light rounded-0"><i class='bx bx-list-ul me-0'></i></a></div>
+									</form>
+
 								</div>
 								<div class="product-grid">
 									<div class="row row-cols-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-3 g-sm-4">

@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from accounts.models import CountryName, Division, District
 from django.conf import settings
+import uuid
+from django.contrib.postgres.fields import JSONField  
 
 User = get_user_model()
 
@@ -77,7 +79,7 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     subcategory = ChainedForeignKey(SubCategory, chained_field="category", chained_model_field="category", on_delete=models.CASCADE, related_name="products", null=True, blank=True, show_all=False,auto_choose=True,sort=True,)
-    
+    is_featured = models.BooleanField(default=False)
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="products")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -173,6 +175,7 @@ class Variation(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, null=False, default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2)
+    price_range = models.CharField(max_length=100, blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -219,25 +222,6 @@ class Wishlist(models.Model):
     def __str__(self):
         return f"{self.product.title} in {self.user.username}'s wishlist"
 
-# ===========================
-# Cart & Wishlist Models
-# ===========================
-
-class Cart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cart_items")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    color = models.CharField(max_length=50, blank=True, null=True)
-    size = models.CharField(max_length=50, blank=True, null=True)
-    added_at = models.DateTimeField(auto_now_add=True)
-
-    
-    def __str__(self):
-        return f"{self.product.title} ({self.color}, {self.size})"
-    
-    def __str__(self):
-        return f"{self.product.title} in {self.user.username}'s cart"
-
 
     
 
@@ -267,6 +251,37 @@ class Coupon(models.Model):
         """Check if the coupon is currently valid and active"""
         now = timezone.now()
         return self.active and self.valid_from <= now <= self.valid_to
+
+
+# ===========================
+# Cart Models
+# ===========================
+
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cart_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    size = models.CharField(max_length=50, blank=True, null=True)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    
+    def __str__(self):
+        return f"{self.product.title} ({self.color}, {self.size})"
+    
+    def __str__(self):
+        return f"{self.product.title} in {self.user.username}'s cart"
+
+
+class OrderStatus(models.Model):
+    STATUS_CHOICES = (
+        ('confirmed', 'Order Confirmed'),
+        ('picked', 'Picked by courier'),
+        ('onway', 'On the way'),
+        ('ready', 'Ready for pickup'),
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='confirmed')
 
 
 class ShippingCharge(models.Model):
@@ -305,12 +320,14 @@ class ShippingAddress(models.Model):
     address2 = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    @property
+    def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True, blank=True)
     shipping_method = models.ForeignKey(ShippingCharge, on_delete=models.SET_NULL, null=True)
     shipping_address = models.ForeignKey(
         ShippingAddress,
@@ -322,6 +339,13 @@ class Order(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    order_status = models.ForeignKey(
+        OrderStatus,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -345,6 +369,25 @@ class OrderItem(models.Model):
 
 
 
+
+class CompletedOrder(models.Model):
+    tracking_id = models.CharField(max_length=20, unique=True, editable=False)
+    cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True, related_name="completed_orders")
+    shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.SET_NULL, null=True, related_name="completed_orders")
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="completion")
+    order_items = models.ManyToManyField(OrderItem, related_name="completed_orders")
+
+    # NEW — all customer info saved as snapshot
+    customer_info = models.JSONField(null=True, blank=True)
+
+    # NEW — all product info saved as snapshot
+    product_info = models.JSONField(null=True, blank=True)
+
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.tracking_id} — Order #{self.order.id}"
 
 
 

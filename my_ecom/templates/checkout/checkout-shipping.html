@@ -63,7 +63,7 @@
 												</div>
 											</div>
 										</div>
-										<form method="POST" action="{% url 'checkout-shipping' %}">
+										<form method="POST" action="{% url 'checkout-shipping' %}" id="shippingForm">
 											{% csrf_token %}
 
 											<table class="table" name="shipping_method">
@@ -96,56 +96,8 @@
 													{% endfor %}
 												</tbody>
 											</table>
-
-											<button type="submit" class="btn btn-dark rounded-0 mt-3">
-												Continue to Payment <i class="bx bx-chevron-right"></i>
-											</button>
 										</form>
-
-										<!-- <form method="POST" action="{% url 'checkout-payment' %}">
-											{% csrf_token %}
-											<div class="card rounded-0 shadow-none">
-												<div class="card-body">
-													<h2 class="h5 mb-0">Choose Shipping Method</h2>
-													<div class="my-3 border-bottom"></div>
-													<div class="table-responsive">
-														<table class="table" name="shipping_method">
-															<thead class="table-light">
-																<tr>
-																	<th>Select</th>
-																	<th>Method</th>
-																	<th>Country</th>
-																	<th>Division</th>
-																	<th>Time</th>
-																	<th>Fee</th>
-																</tr>
-															</thead>
-															<tbody>
-																{% for method in shipping_methods %}
-																<tr>
-																	<td>
-																		<input type="radio" class="shipping-option"
-																		data-fee="{{ method.charge_amount|floatformat:2 }}"
-																		name="shipping_method"
-																		value="{{ method.id }}"
-																		required>
-																	</td>
-																	<td>{{ method.Shipping_type_name }}</td>
-																	<td>{{ method.country }}</td>
-																	<td>{{ method.division }}</td>
-																	<td>{{ method.delivery_time|default:"--" }}</td>
-																	<td>${{ method.charge_amount }}</td>
-																</tr>
-																{% endfor %}
-															</tbody>
-														</table>
-													</div>
-													<button type="submit" class="btn btn-dark rounded-0 mt-3">
-														Continue to Payment <i class="bx bx-chevron-right"></i>
-													</button>
-												</div>
-											</div>
-										</form> -->
+										
 										<div class="card rounded-0 shadow-none">
 											<div class="card-body">
 												<div class="row">
@@ -156,7 +108,9 @@
 													</div>
 													<div class="col-md-6">
 														<div class="d-grid">
-															<a href="javascript:;" class="btn btn-dark btn-ecomm">Proceed to Payment<i class="bx bx-chevron-right"></i></a>
+															<a href="javascript:;" id="proceedPayment" class="btn btn-dark btn-ecomm">
+																Proceed to Payment <i class="bx bx-chevron-right"></i>
+															</a>
 														</div>
 													</div>
 												</div>
@@ -303,6 +257,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+
+document.getElementById("proceedPayment").addEventListener("click", function() {
+    document.getElementById("shippingForm").submit();
+});
 
 
 </script>

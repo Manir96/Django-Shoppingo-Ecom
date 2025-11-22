@@ -63,149 +63,102 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="card  rounded-0 shadow-none mb-3 border">
+                                <div class="card rounded-0 shadow-none mb-3 border">
                                     <div class="card-body">
                                         <h5 class="mb-0">Review Your Order</h5>
                                         <div class="my-3 border-bottom"></div>
+
+                                        {% for item in order_items %}
                                         <div class="row align-items-center g-3">
                                             <div class="col-12 col-lg-6">
                                                 <div class="d-lg-flex align-items-center gap-3">
                                                     <div class="cart-img text-center text-lg-start">
-                                                        <img src="assets/images/products/01.png" width="130" alt="">
+                                                        {% if item.product.images.first %}
+                                                        <img src="{{ item.product.images.first.image.url }}" width="130" alt="{{ item.product.title }}">
+                                                        {% else %}
+                                                        <img src="{% static 'assets/images/no-image.png' %}" width="130" alt="No image">
+                                                        {% endif %}
                                                     </div>
                                                     <div class="cart-detail text-center text-lg-start">
-                                                        <h6 class="mb-2">White Regular Fit Polo T-Shirt</h6>
-                                                        <p class="mb-0">Size: <span>Regular</span>
-                                                        </p>
-                                                        <p class="mb-2">Color: <span>White & Blue</span>
-                                                        </p>
-                                                        <h5 class="mb-0">$19.00</h5>
+                                                        <h6 class="mb-2">{{ item.product.title }}</h6>
+                                                        {% if item.size %}
+                                                        <p class="mb-0">Size: <span>{{ item.size }}</span></p>
+                                                        {% endif %}
+                                                        {% if item.color %}
+                                                        <p class="mb-2">Color: <span>{{ item.color }}</span></p>
+                                                        {% endif %}
+                                                        <h5 class="mb-0">${{ item.item_total }}</h5>
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <div class="col-12 col-lg-3">
                                                 <div class="cart-action text-center">
-                                                    <input type="number" class="form-control rounded-0" value="2" min="1">
+                                                    <input type="number" class="form-control rounded-0" value="{{ item.quantity }}" min="1" readonly>
                                                 </div>
                                             </div>
+
                                             <div class="col-12 col-lg-3">
                                                 <div class="text-center">
-                                                    <div class="d-flex gap-2 justify-content-center justify-content-lg-end"> <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-x-circle me-0'></i></a>
-                                                        <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-edit'></i> Edit</a>
+                                                    <div class="d-flex gap-2 justify-content-center justify-content-lg-end">
+                                                        <a href="{% url 'delete_order_item' item.id %}"
+                                                        class="btn btn-light rounded-0 btn-ecomm"
+                                                        onclick="return confirm('Are you sure you want to remove this item?');">
+                                                        <i class='bx bx-x-circle me-0'></i>
+                                                        </a>
+
+                                                        <a href="{% url 'shopping-cart' %}" 
+                                                        class="btn btn-light rounded-0 btn-ecomm">
+                                                        <i class='bx bx-edit'></i> Edit
+                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div class="my-4 border-top"></div>
-                                        <div class="row align-items-center g-3">
-                                            <div class="col-12 col-lg-6">
-                                                <div class="d-lg-flex align-items-center gap-3">
-                                                    <div class="cart-img text-center text-lg-start">
-                                                        <img src="assets/images/products/17.png" width="130" alt="">
-                                                    </div>
-                                                    <div class="cart-detail text-center text-lg-start">
-                                                        <h6 class="mb-2">Fancy Red Sneakers</h6>
-                                                        <p class="mb-0">Size: <span>Small</span>
-                                                        </p>
-                                                        <p class="mb-2">Color: <span>White & Red</span>
-                                                        </p>
-                                                        <h5 class="mb-0">$16.00</h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="cart-action text-center">
-                                                    <input type="number" class="form-control rounded-0" value="2" min="1">
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="text-center">
-                                                    <div class="d-flex gap-2 justify-content-center justify-content-lg-end"> <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-x-circle me-0'></i></a>
-                                                        <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-edit'></i> Edit</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="my-4 border-top"></div>
-                                        <div class="row align-items-center g-3">
-                                            <div class="col-12 col-lg-6">
-                                                <div class="d-lg-flex align-items-center gap-3">
-                                                    <div class="cart-img text-center text-lg-start">
-                                                        <img src="assets/images/products/04.png" width="130" alt="">
-                                                    </div>
-                                                    <div class="cart-detail text-center text-lg-start">
-                                                        <h6 class="mb-2">Yellow Shine Blazer</h6>
-                                                        <p class="mb-0">Size: <span>Medium</span>
-                                                        </p>
-                                                        <p class="mb-2">Color: <span>Yellow & Blue</span>
-                                                        </p>
-                                                        <h5 class="mb-0">$22.00</h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="cart-action text-center">
-                                                    <input type="number" class="form-control rounded-0" value="2" min="1">
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="text-center">
-                                                    <div class="d-flex gap-2 justify-content-center justify-content-lg-end"> <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-x-circle me-0'></i></a>
-                                                        <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-edit'></i> Edit</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="my-4 border-top"></div>
-                                        <div class="row align-items-center g-3">
-                                            <div class="col-12 col-lg-6">
-                                                <div class="d-lg-flex align-items-center gap-3">
-                                                    <div class="cart-img text-center text-lg-start">
-                                                        <img src="assets/images/products/09.png" width="130" alt="">
-                                                    </div>
-                                                    <div class="cart-detail text-center text-lg-start">
-                                                        <h6 class="mb-2">Men Black Hat Cap</h6>
-                                                        <p class="mb-0">Size: <span>Medium</span>
-                                                        </p>
-                                                        <p class="mb-2">Color: <span>Black</span>
-                                                        </p>
-                                                        <h5 class="mb-0">$14.00</h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="cart-action text-center">
-                                                    <input type="number" class="form-control rounded-0" value="1" min="1">
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-lg-3">
-                                                <div class="text-center">
-                                                    <div class="d-flex gap-2 justify-content-center justify-content-lg-end"> <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-x-circle me-0'></i></a>
-                                                        <a href="javascript:;" class="btn btn-light rounded-0 btn-ecomm"><i class='bx bx-edit'></i> Edit</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        {% empty %}
+                                        <p class="text-center text-muted">No items in your order.</p>
+                                        {% endfor %}
                                     </div>
                                 </div>
+
                                 <div class="card rounded-0 shadow-none mb-3 border">
                                     <div class="card-body">
+                                      
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <div class="shipping-aadress">
+                                                <div class="shipping-address">
                                                     <h5 class="mb-3">Shipping to:</h5>
-                                                    <p class="mb-1"><span class="text-dark">Customer:</span> Jhon Michle</p>
-                                                    <p class="mb-1"><span class="text-dark">Address:</span> 47-A, Street Name, City, Australia</p>
-                                                    <p class="mb-1"><span class="text-dark">Phone:</span> (123) 472-796</p>
+                                                    {% if address %}
+                                                        <p class="mb-1"><span class="text-dark">Customer:</span> {{ address.first_name }} {{ address.last_name }}</p>
+                                                        <p class="mb-1"><span class="text-dark">Address 1:</span> {{ address.address1 }}</p>
+                                                        {% if address.address2 %}
+                                                            <p class="mb-1"><span class="text-dark">Address 2:</span> {{ address.address2 }}</p>
+                                                        {% endif %}
+                                                        <p class="mb-1"><span class="text-dark">Phone:</span> {{ address.phone }}</p>
+                                                        <p class="mb-1"><span class="text-dark">Email:</span> {{ address.email }}</p>
+                                                        <p class="mb-1"><span class="text-dark">District:</span> {{ address.district }}</p>
+                                                        <p class="mb-1"><span class="text-dark">Division:</span> {{ address.division }}</p>
+                                                        <p class="mb-1"><span class="text-dark">Country:</span> {{ address.country }}</p>
+                                                    {% else %}
+                                                        <p>No shipping address available.</p>
+                                                    {% endif %}
                                                 </div>
                                             </div>
+
                                             <div class="col-md-6">
                                                 <div class="payment-mode">
                                                     <h5 class="mb-3">Payment Mode:</h5>
-                                                    <img src="assets/images/icons/visa.png" width="150" class="p-2 border bg-light rounded" alt="">
+                                                    {% if order_items %}
+                                                        <h4>{{ order_items.first.payment_method|default:"Not selected" }}</h4>
+                                                    {% else %}
+                                                        <p class="text-muted">No payment method found.</p>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
+                                        
                                     </div>
                                 </div>
                                 <div class="card rounded-0 shadow-none mb-3 border">
@@ -216,7 +169,10 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div class="d-grid"><a href="checkout-complete.html" class="btn btn-outline-dark btn-ecomm">Complete Order<i class="bx bx-chevron-right"></i></a>
+                                                <div class="d-grid">
+                                                    <a href="{% url 'checkout-complete' order.id %}" class="btn btn-outline-dark btn-ecomm">
+                                                        Complete Order <i class="bx bx-chevron-right"></i>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -228,57 +184,50 @@
                             <div class="checkout-form p-3 bg-light">
                                 <div class="card rounded-0 border bg-transparent shadow-none">
                                     <div class="card-body">
-                                        <p class="fs-5">Apply Discount Code</p>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control rounded-0" placeholder="Enter discount code">
-                                            <button class="btn btn-dark btn-ecomm" type="button">Apply</button>
-                                        </div>
+                                        <p class="fs-5 mb-3">Apply Discount Code</p>
+
+                                        {% if request.session.coupon_code %}
+                                            <div class="alert alert-success py-2 mb-2">
+                                                <strong>Coupon Applied:</strong> {{ request.session.coupon_code }} <br>
+                                                Discount: ${{ request.session.coupon_discount|floatformat:2 }}
+                                            </div>
+                                            <form method="POST" action="{% url 'remove_coupon' %}">
+                                                {% csrf_token %}
+                                                <button class="btn btn-outline-danger btn-sm" type="submit">Remove Coupon</button>
+                                            </form>
+                                        {% else %}
+                                            <form method="POST" action="{% url 'apply_coupon' %}">
+                                                {% csrf_token %}
+                                                <div class="input-group">
+                                                    <input type="text" name="coupon_code" class="form-control rounded-0" placeholder="Enter discount code" required>
+                                                    <button class="btn btn-dark btn-ecomm" type="submit">Apply</button>
+                                                </div>
+                                            </form>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                <div class="card rounded-0 border bg-transparent shadow-none">
-                                    <div class="card-body">
-                                        <p class="fs-5">Estimate Shipping and Tax</p>
-                                        <div class="my-3 border-top"></div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Country Name</label>
-                                            <select class="form-select rounded-0">
-                                                <option selected>United States</option>
-                                                <option value="1">Australia</option>
-                                                <option value="2">India</option>
-                                                <option value="3">Canada</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">State/Province</label>
-                                            <select class="form-select rounded-0">
-                                                <option selected>California</option>
-                                                <option value="1">Texas</option>
-                                                <option value="2">Canada</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-0">
-                                            <label class="form-label">Zip/Postal Code</label>
-                                            <input type="email" class="form-control rounded-0">
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card rounded-0 border bg-transparent mb-0 shadow-none">
                                     <div class="card-body">
-                                        <p class="mb-2">Subtotal: <span class="float-end">$198.00</span>
-                                        </p>
-                                        <p class="mb-2">Shipping: <span class="float-end">--</span>
-                                        </p>
-                                        <p class="mb-2">Taxes: <span class="float-end">$14.00</span>
-                                        </p>
-                                        <p class="mb-0">Discount: <span class="float-end">--</span>
-                                        </p>
-                                        <div class="my-3 border-top"></div>
-                                        <h5 class="mb-0">Order Total: <span class="float-end">212.00</span></h5>
-                                        <div class="my-4"></div>
-                                        <div class="d-grid"> <a href="javascript:;" class="btn btn-dark btn-ecomm">Proceed to Checkout</a>
+                                        {% if order_items %}
+                                            <p class="mb-2">Subtotal: <span class="float-end">${{ order.subtotal }}</span></p>
+                                            <p class="mb-2">Shipping: <span class="float-end">${{ order.shipping_charge }}</span></p>
+                                            <p class="mb-0">Discount: <span class="float-end">-${{ order.discount }}</span></p><hr>
+                                            <h5 class="mb-0">Order Total: <span class="float-end">${{ order.total_amount }}</span></h5><br>
+                                        {% else %}
+                                            <p class="mb-2">Subtotal: <span class="float-end">$0.00</span></p>
+                                            <p class="mb-2">Shipping: <span class="float-end">$0.00</span></p>
+                                            <p class="mb-0">Discount: <span class="float-end">-$0.00</span></p>
+                                            <h5 class="mb-0">Order Total: <span class="float-end">$0.00</span></h5> 
+                                        {% endif %}
+                                        <div class="d-grid">
+                                            <a href="{% url 'checkout-complete' order.id %}" class="btn btn-dark btn-ecomm">Complete Order</a>
                                         </div>
+                                        
+
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>

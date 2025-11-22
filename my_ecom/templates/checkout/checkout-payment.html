@@ -105,17 +105,14 @@
 													</a>
 												</li>
 											</ul>
-											<form method="POST" action="{% url 'checkout-payment' %}">
+											<form id="paymentForm" method="POST" action="{% url 'checkout-payment' %}">
 												{% csrf_token %}
-												<!-- COD checkbox -->
 												<div class="form-check">
-													<input class="form-check-input" type="checkbox" name="payment_method" value="COD" id="codCheckbox" required>
+													<input class="form-check-input" type="checkbox" name="payment_method" value="COD" id="codCheckbox">
 													<label class="form-check-label" for="codCheckbox">
 														Cash on Delivery (Pay when you receive the order)
 													</label>
 												</div>
-
-												<button type="submit" class="btn btn-dark btn-ecomm mt-3">Confirm Order</button>
 											</form>
 
 											
@@ -207,17 +204,22 @@
 											</div>
 										</div>
 									</div>
-									<div class="card rounded-0 shadow-none border">
+									<div class="card rounded-0 shadow-none border mt-3">
 										<div class="card-body">
 											<div class="row">
 												<div class="col-md-6">
 													<div class="d-grid">
-														<a href="{% url 'checkout-shipping' %}" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Shipping</a>
+														<a href="{% url 'checkout-shipping' %}" class="btn btn-light btn-ecomm">
+															<i class="bx bx-chevron-left"></i> Back to Shipping
+														</a>
 													</div>
 												</div>
 												<div class="col-md-6">
 													<div class="d-grid">
-														<a href="{% url 'checkout-review' %}" class="btn btn-outline-dark btn-ecomm">Review Your Order<i class="bx bx-chevron-right"></i></a>
+														<!-- This button will trigger form submission -->
+														<button type="button" id="reviewBtn" class="btn btn-outline-dark btn-ecomm">
+															Review Your Order <i class="bx bx-chevron-right"></i>
+														</button>
 													</div>
 												</div>
 											</div>
@@ -237,7 +239,7 @@
 														<div class="alert alert-success py-2 mb-2">
 															<strong>Coupon Applied:</strong> {{ request.session.coupon_code }} <br>
 															Discount: 
-															${{ request.session.coupon_discount|default:order.discount|floatformat:2 }}
+															${{ request.session.coupon_discount|default:order_data.discount|default:"0"|floatformat:2 }}
 														</div>
 														<form method="POST" action="{% url 'remove_coupon' %}">
 															{% csrf_token %}
@@ -252,6 +254,7 @@
 															</div>
 														</form>
 													{% endif %}
+
 												</div>
 
 											</div>
@@ -315,4 +318,17 @@
 		</div>
 	</div>
 	<!--end page wrapper -->
+
+
+<script>
+document.getElementById('reviewBtn').addEventListener('click', function() {
+    const codCheckbox = document.getElementById('codCheckbox');
+    if (!codCheckbox.checked) {
+        alert("Please select 'Cash on Delivery' before proceeding.");
+    } else {
+        document.getElementById('paymentForm').submit();
+    }
+});
+</script>
+
 {% endblock main-content %}
