@@ -50,7 +50,11 @@
 								<div class="col-lg-8">
 									<div class="card shadow-none mb-0">
 										<div class="card-body">
-											<p>Hello <strong>Madison Ruiz</strong> (not <strong>Madison Ruiz?</strong>  <a href="javascript:;">Logout</a>)</p>
+											<p>
+												Hello <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> 
+												(not <strong>{{ request.user.get_full_name|default:request.user.username }}?</strong>  
+												<a href="{% url 'user_logout' %}">Logout</a>)
+											</p>
 											<p>From your account dashboard you can view your Recent Orders, manage your shipping and billing addesses and edit your password and account details</p>
 										</div>
 									</div>

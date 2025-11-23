@@ -51,36 +51,42 @@
 									<div class="card shadow-none mb-0">
 										<div class="card-body">
 											<div class="table-responsive">
-												<table class="table">
-													<thead class="table-light">
+												<tbody>
+													{% if download_items %}
+														{% for d in download_items %}
+															<tr>
+																<!-- Product Title -->
+																<td>{{ d.product_title }}</td>
+
+																<!-- Remaining Downloads -->
+																<td>{{ d.remaining }}</td>
+
+																<!-- Expiry Date -->
+																<td>{{ d.expires_at|date:"F d, Y" }}</td>
+
+																<!-- Download Button -->
+																<td>
+																	{% if d.download_url %}
+																		<a href="{{ d.download_url }}"
+																		class="btn btn-dark btn-sm rounded-0"
+																		download>
+																			Download
+																		</a>
+																	{% else %}
+																		<span class="text-muted">Not available</span>
+																	{% endif %}
+																</td>
+															</tr>
+														{% endfor %}
+													{% else %}
 														<tr>
-															<th>Product</th>
-															<th>Downloads Remaining</th>
-															<th>Expires</th>
-															<th>Download</th>
-														</tr>
-													</thead>
-													<tbody>
-														<tr>
-															<td>Stock Moview Clip</td>
-															<td>12</td>
-															<td>Novermber 15, 2021</td>
-															<td>
-																<div class="d-flex gap-2">	<a href="javascript:;" class="btn btn-dark btn-sm rounded-0">Movie Clip 1</a>
-																</div>
+															<td colspan="4" class="text-center">
+																No downloadable products found.
 															</td>
 														</tr>
-														<tr>
-															<td>Stock Moview Clip</td>
-															<td>08</td>
-															<td>Novermber 12, 2021</td>
-															<td>
-																<div class="d-flex gap-2"> <a href="javascript:;" class="btn btn-dark btn-sm rounded-0">Movie Clip 2</a>
-																</div>
-															</td>
-														</tr>
-													</tbody>
-												</table>
+													{% endif %}
+												</tbody>
+
 											</div>
 										</div>
 									</div>

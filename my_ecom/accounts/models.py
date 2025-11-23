@@ -4,6 +4,7 @@ import uuid
 from django.utils import timezone
 from datetime import timedelta
 from smart_selects.db_fields import ChainedForeignKey
+from ckeditor.fields import RichTextField
 
 class CountryName(models.Model):
     nameName = models.CharField(max_length=100, unique=True)
@@ -128,3 +129,8 @@ class PasswordResetCode(models.Model):
 
     def is_valid(self):
         return timezone.now() < self.created_at + timedelta(minutes=10)
+    
+
+
+
+

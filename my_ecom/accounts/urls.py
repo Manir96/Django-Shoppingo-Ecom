@@ -10,6 +10,7 @@ urlpatterns = [
     path('account-payment-methods/', views.account_payment_methods, name='account-payment-methods'),
     path('account-user-details/', views.account_user_details, name='account-user-details'),
     path('account-orders/', views.account_orders, name='account-orders'),
+    path('account-orders/<int:order_id>/', views.account_order_detail, name='account-order-detail'),
 
 
 

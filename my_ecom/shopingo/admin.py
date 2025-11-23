@@ -303,3 +303,20 @@ class OrderStatusAdmin(admin.ModelAdmin):
     def get_status_display_name(self, obj):
         return dict(obj.STATUS_CHOICES).get(obj.status, "Unknown")
     get_status_display_name.short_description = "Display Name"
+
+
+@admin.register(WhyChooseUs)
+class WhyChooseUsAdmin(admin.ModelAdmin):
+    list_display = ("title", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+@admin.register(PersonalInfo)
+class PersonalInfoAdmin(admin.ModelAdmin):
+    list_display = ("email", "phone_number", "working_day_start", "working_day_end")
+    list_editable = ("phone_number",)
+
+
+
+
+

@@ -157,6 +157,7 @@ class Size(models.Model):
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    brand_logo = models.ImageField(upload_to="brands/", blank=True, null=True)
     slug = models.SlugField(max_length=150, unique=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -392,5 +393,40 @@ class CompletedOrder(models.Model):
 
 
 
+class WhyChooseUs(models.Model):
+    title = models.CharField(max_length=150)
+    subtitle = models.CharField(max_length=255, blank=True, null=True)  # iccha hole use korba
+    description = models.TextField()
+    
+    # icon image (admin theke upload korbe)
+    icon = models.ImageField(upload_to="why_choose_us/", blank=True, null=True)
 
+    # jodi static folder er png use korte chao:
+    icon_file = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Example: delivery.png, money-bag.png, support.png"
+    )
+
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title
+
+class PersonalInfo(models.Model):
+    phone_number = models.CharField(max_length=20, blank=True)
+    address_line = models.TextField(max_length=255, blank=True)
+    email = models.EmailField(blank=True)
+    working_day_start = models.TimeField(null=True, blank=True)
+    working_day_end = models.TimeField(null=True, blank=True)
+    working_time_start = models.TimeField(null=True, blank=True)
+    working_time_end = models.TimeField(null=True, blank=True)
+    our_story = RichTextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Personal Info ({self.email})"
 

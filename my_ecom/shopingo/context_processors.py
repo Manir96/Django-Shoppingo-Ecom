@@ -8,12 +8,14 @@ from django.utils import timezone
 def global_categories(request):
     categories = Category.objects.prefetch_related('subcategories').all()
     tag = Tag.objects.all()
+    personal_info = PersonalInfo.objects.last()
 
 
 
     return {
         'categories': categories,
         'tags': tag,
+        'personal_info': personal_info,
         }
 
 

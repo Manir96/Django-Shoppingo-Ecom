@@ -41,36 +41,25 @@
 					<h4>Why Choose Us</h4>
 					<hr>
 					<div class="row row-cols-1 row-cols-lg-3">
-						<div class="col d-flex">
-							<div class="card rounded-0 shadow-none w-100">
-								<div class="card-body">
-									<img src="{% static 'assets/images/icons/delivery.png' %}" width="60" alt="">
-									<h5 class="my-3">FREE SHIPPING</h5>
-									<p class="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industr in some form.</p>
+						{% for item in why_items %}
+							<div class="col d-flex">
+								<div class="card rounded-0 shadow-none w-100">
+									<div class="card-body">
+										{% if item.icon %}
+											<img src="{{ item.icon.url }}" width="60" alt="{{ item.title }}">
+										{% elif item.icon_file %}
+											<img src="{% static 'assets/images/icons/' %}{{ item.icon_file }}" width="60" alt="{{ item.title }}">
+										{% endif %}
+
+										<h5 class="my-3">{{ item.title }}</h5>
+										<p class="mb-0">{{ item.description }}</p>
+									</div>
 								</div>
 							</div>
-						</div>
-						<div class="col d-flex">
-							<div class="card rounded-0 shadow-none w-100">
-								<div class="card-body">
-									<img src="{% static 'assets/images/icons/money-bag.png' %}" width="60" alt="">
-									<h5 class="my-3">100% MONEY BACK GUARANTEE</h5>
-									<p class="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industr in some form.</p>
-								</div>
-							</div>
-						</div>
-						<div class="col d-flex">
-							<div class="card rounded-0 shadow-none w-100">
-								<div class="card-body">
-									<img src="{% static 'assets/images/icons/support.png' %}" width="60" alt="">
-									<h5 class="my-3">ONLINE SUPPORT 24/7</h5>
-									<p class="mb-0">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industr in some form.</p>
-								</div>
-							</div>
-						</div>
+						{% endfor %}
 					</div>
-					<!--end row-->
 				</div>
+
 			</section>
 			<section class="py-4">
 				<div class="container">

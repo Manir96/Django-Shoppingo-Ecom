@@ -3,9 +3,6 @@ from shopingo import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('shop-grid-top/', views.shop_grid_top, name='shop-grid-top'),
-    path('shop-grid-left/', views.shop_grid_left_sidebar, name='shop-grid-left'),
-    path('shop-grid-list/', views.shop_list_left_sidebar, name='shop-grid-list'),
     path('shop-categories/', views.shop_categories, name='shop-categories'),
     path('product-detail/<slug:slug>/', views.product_detail, name='product-detail'),
     path('product-comparison/', views.product_comparison, name='product-comparison'),

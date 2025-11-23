@@ -105,24 +105,6 @@ def home(request):
 
 
 
-
-def shop_grid_top(request):
-    category_slug = request.GET.get('category')
-    subcategory_slug = request.GET.get('subcategory')
-    products = Product.objects.all()
-
-    if category_slug:
-        products = products.filter(category__slug=category_slug)
-    if subcategory_slug:
-        products = products.filter(subcategory__slug=subcategory_slug)
-    return render(request, 'products/shop-grid-filter-on-top.html')
-
-def shop_grid_left_sidebar(request):
-    return render(request, 'products/shop-grid-left-sidebar.html')
-
-def shop_list_left_sidebar(request):
-    return render(request, 'products/shop-list-left-sidebar.html')
-
 def shop_categories(request):
     return render(request, 'products/shop-categories.html')
 
@@ -723,7 +705,11 @@ def order_tracking(request):
 
 
 def about_page(request):
-    return render(request, 'about.html')
+    why_items = WhyChooseUs.objects.filter(is_active=True)
+    context = {
+        'why_items': why_items,
+    }
+    return render(request, 'about.html', context)
 
 def contact_page(request):
     return render(request, 'contact.html')
@@ -909,26 +895,6 @@ def produc_category_view(request, slug):
     return render(request, template, context)
 
 
-
-# def produc_subCategory_view(request, slug):
-#     view_type = request.GET.get('view', 'top')  # 'top', 'left', or 'list'
-#     subCategory = get_object_or_404(SubCategory, slug=slug)
-#     products = subCategory.products.all()
-    
-
-#     # Choose template dynamically
-#     if view_type == 'left':
-#         template = 'products/subCategory/shop-grid-left-sidebar.html'
-#     elif view_type == 'list':
-#         template = 'products/subCategory/shop-list-left-sidebar.html'
-#     else:
-#         template = 'products/subCategory/shop-grid-filter-on-top.html'
-
-#     context = {
-#         'subCategory': subCategory,
-#         'products': products,
-#     }
-#     return render(request, template, context)
 
 
 
