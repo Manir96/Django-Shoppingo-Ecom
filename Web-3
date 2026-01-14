@@ -1,0 +1,82 @@
+web3-referral-reward-system/
+│
+├── README.md                  # ⭐ Client-focused README
+├── .gitignore
+├── requirements.txt
+├── manage.py
+│
+├── config/                    # Main Django config
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+│
+├── apps/
+│   ├── accounts/              # User & Wallet logic
+│   │   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py          # UserProfile, Wallet
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── services.py        # Wallet / auth helpers
+│   │
+│   ├── referrals/             # Referral system (CORE)
+│   │   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── models.py          # Referral, Invite, Points
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── logic.py           # Referral reward logic
+│   │
+│   ├── rewards/               # Token / points logic
+│   │   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── models.py          # TokenBalance, History
+│   │   ├── services.py        # Claim, unlock, vesting
+│   │   └── views.py
+│   │
+│   ├── dashboard/             # Custom Admin (NO Django admin)
+│   │   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── permissions.py
+│   │
+│   └── core/                  # Common utilities
+│       ├── __init__.py
+│       ├── mixins.py
+│       ├── constants.py
+│       └── helpers.py
+│
+├── templates/
+│   ├── auth/
+│   │   ├── login.html
+│   │   └── register.html
+│   │
+│   ├── dashboard/
+│   │   ├── index.html
+│   │   ├── users.html
+│   │   └── referrals.html
+│   │
+│   ├── user/
+│   │   ├── profile.html
+│   │   ├── wallet.html
+│   │   └── rewards.html
+│   │
+│   └── base.html
+│
+├── static/
+│   ├── css/
+│   │   └── main.css
+│   ├── js/
+│   │   └── main.js
+│   └── images/
+│
+├── media/                     # User uploads (optional)
+│
+└── docs/
+    ├── screenshots/           # ⭐ UX screenshots for README
+    └── architecture.md
