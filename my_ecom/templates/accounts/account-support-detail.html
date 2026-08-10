@@ -1,0 +1,109 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block main-content %}
+{% with page_title="Support" %}
+{% include 'accounts/partials/layout_start.html' %}
+
+<header class="dash-hero glass-card fade-up" style="margin-bottom:1rem;">
+	<div>
+		<p class="dash-greeting">Ticket #{{ ticket.id }}</p>
+		<h1 style="font-size:1.35rem;margin:0;">{{ ticket.subject }}</h1>
+		<p class="text-muted small mb-0 mt-1">
+			{{ ticket.get_category_display }}
+			{% if ticket.order %}
+			· {% if ticket.order.completion %}<a href="{% url 'account-order-detail' ticket.order.completion.id %}">Order #{{ ticket.order_id }}</a>{% else %}Order #{{ ticket.order_id }}{% endif %}
+			{% endif %}
+			· Opened {{ ticket.created_at|date:"M d, Y H:i" }}
+		</p>
+	</div>
+	<span class="status-badge {% if ticket.status == 'resolved' or ticket.status == 'closed' %}delivered{% elif ticket.status == 'pending' %}pending{% else %}processing{% endif %}">
+		{{ ticket.get_status_display }}
+	</span>
+</header>
+
+<section class="glass-card dash-panel fade-up mb-3">
+	<div class="d-flex flex-wrap gap-2 mb-3">
+		<a href="{% url 'account-support' %}" class="btn btn-sm dash-btn-ghost"><i class="bx bx-arrow-back"></i> All tickets</a>
+		{% if ticket.status != 'closed' %}
+		<form method="post" class="d-inline" onsubmit="return confirm('Close this ticket?');">
+			{% csrf_token %}
+			<input type="hidden" name="action" value="close">
+			<button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Close ticket</button>
+		</form>
+		{% endif %}
+	</div>
+
+	<div class="support-thread">
+		{% for r in replies %}
+		<article class="support-msg {% if r.is_staff %}staff{% else %}customer{% endif %} mb-3">
+			<div class="d-flex justify-content-between gap-2 flex-wrap mb-1">
+				<strong class="small">
+					{% if r.is_staff %}Shopingo Support{% else %}You{% endif %}
+				</strong>
+				<span class="small text-muted">{{ r.created_at|date:"M d, Y H:i" }}</span>
+			</div>
+			<p class="mb-0" style="white-space:pre-wrap;">{{ r.body }}</p>
+		</article>
+		{% empty %}
+		<article class="support-msg customer mb-3">
+			<div class="d-flex justify-content-between gap-2 flex-wrap mb-1">
+				<strong class="small">You</strong>
+				<span class="small text-muted">{{ ticket.created_at|date:"M d, Y H:i" }}</span>
+			</div>
+			<p class="mb-0" style="white-space:pre-wrap;">{{ ticket.message }}</p>
+		</article>
+		{% endfor %}
+
+		{% if ticket.admin_reply and not replies %}
+		<article class="support-msg staff mb-3">
+			<div class="d-flex justify-content-between gap-2 flex-wrap mb-1">
+				<strong class="small">Shopingo Support</strong>
+				{% if ticket.replied_at %}<span class="small text-muted">{{ ticket.replied_at|date:"M d, Y H:i" }}</span>{% endif %}
+			</div>
+			<p class="mb-0" style="white-space:pre-wrap;">{{ ticket.admin_reply }}</p>
+		</article>
+		{% endif %}
+	</div>
+</section>
+
+{% if ticket.status != 'closed' %}
+<section class="glass-card dash-panel fade-up">
+	<h2 class="h6 mb-3">Reply</h2>
+	<form method="post" class="row g-3">
+		{% csrf_token %}
+		<input type="hidden" name="action" value="reply">
+		<div class="col-12">
+			<textarea name="body" class="form-control rounded-3" rows="4" required minlength="2" placeholder="Add more details or ask a follow-up..."></textarea>
+		</div>
+		<div class="col-12">
+			<button type="submit" class="btn dash-btn-primary">Send reply</button>
+		</div>
+	</form>
+</section>
+{% else %}
+<section class="glass-card dash-panel fade-up">
+	<p class="text-muted mb-2">This ticket is closed.</p>
+	<a href="{% url 'account-support' %}" class="btn dash-btn-primary btn-sm">Open a new ticket</a>
+</section>
+{% endif %}
+
+<style>
+.support-msg {
+	padding: 0.85rem 1rem;
+	border-radius: 14px;
+	border: 1px solid rgba(15,23,42,.08);
+	background: #f8fafc;
+}
+.support-msg.staff {
+	background: #eff6ff;
+	border-color: #bfdbfe;
+}
+.support-msg.customer {
+	background: #fff;
+}
+</style>
+
+{% include 'accounts/partials/layout_end.html' %}
+{% endwith %}
+{% endblock %}

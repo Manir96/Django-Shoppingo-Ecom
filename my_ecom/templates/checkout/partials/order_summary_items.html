@@ -1,0 +1,33 @@
+{% load static %}
+{% for cart_item in cart_items_base %}
+<div class="d-flex align-items-center mb-2">
+	<a class="d-block flex-shrink-0" href="{% url 'product-detail' cart_item.item.product.slug %}">
+		{% if cart_item.item.product.images.first %}
+		<img src="{{ cart_item.item.product.images.first.image.url }}" width="75" alt="{{ cart_item.item.product.title }}">
+		{% else %}
+		<img src="{% static 'assets/images/products/01.png' %}" width="75" alt="{{ cart_item.item.product.title }}">
+		{% endif %}
+	</a>
+	<div class="ps-2 flex-grow-1">
+		<h6 class="mb-1">
+			<a href="{% url 'product-detail' cart_item.item.product.slug %}" class="text-dark">
+				{{ cart_item.item.product.title }}
+			</a>
+		</h6>
+		{% if cart_item.item.size or cart_item.item.color %}
+		<p class="mb-1 small text-muted">
+			{% if cart_item.item.size %}Size: {{ cart_item.item.size }}{% endif %}
+			{% if cart_item.item.size and cart_item.item.color %} · {% endif %}
+			{% if cart_item.item.color %}Color: {{ cart_item.item.color }}{% endif %}
+		</p>
+		{% endif %}
+		<div class="widget-product-meta">
+			<span class="me-2">${{ cart_item.item.product.orginal_price|floatformat:2 }}</span>
+			<span>x {{ cart_item.item.quantity }} = ${{ cart_item.item_total|floatformat:2 }}</span>
+		</div>
+	</div>
+</div>
+<div class="my-3 border-top"></div>
+{% empty %}
+<p class="text-muted mb-0">No items in cart.</p>
+{% endfor %}

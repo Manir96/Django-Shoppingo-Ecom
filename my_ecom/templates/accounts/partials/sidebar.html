@@ -1,0 +1,78 @@
+{% load static %}
+<aside class="dash-sidebar glass-card">
+	<div class="dash-sidebar-profile">
+		<div class="dash-avatar-wrap">
+			{% if avatar_url %}
+			<img src="{{ avatar_url }}" alt="{{ request.user.get_full_name }}" class="dash-avatar" loading="lazy">
+			{% else %}
+			<span class="dash-avatar dash-avatar-fallback">{{ request.user.get_short_name|slice:":1"|upper }}</span>
+			{% endif %}
+			<span class="dash-online"></span>
+		</div>
+		<div class="dash-profile-meta">
+			<div class="dash-name">{{ request.user.get_full_name }}</div>
+			<div class="dash-email">{{ request.user.email }}</div>
+			{% if stats %}
+			<span class="dash-badge dash-badge-{{ stats.membership|lower }}">{{ stats.membership }} Member</span>
+			{% endif %}
+		</div>
+	</div>
+
+	{% if stats %}
+	<div class="dash-loyalty">
+		<div class="d-flex justify-content-between small mb-1">
+			<span>Loyalty Points</span>
+			<strong>{{ stats.reward_points }}</strong>
+		</div>
+		<div class="dash-progress">
+			<span style="width: {{ stats.tier_progress }}%"></span>
+		</div>
+		<div class="small text-muted mt-1">
+			{% if stats.next_tier %}
+			{{ stats.tier_progress }}% to {{ stats.next_tier }}
+			{% else %}
+			Top tier unlocked
+			{% endif %}
+		</div>
+		<div class="dash-mini-stats">
+			<div><strong>{{ stats.total_orders }}</strong><span>Orders</span></div>
+			<div><strong>{{ stats.wishlist_count }}</strong><span>Wishlist</span></div>
+			<div><strong>{{ stats.cart_count }}</strong><span>Cart</span></div>
+		</div>
+	</div>
+	{% endif %}
+
+	<nav class="dash-nav">
+		<a href="{% url 'account-dashboard' %}" class="dash-nav-link {% if active_tab == 'dashboard' %}active{% endif %}">
+			<i class="bx bx-grid-alt"></i><span>Dashboard</span>
+		</a>
+		<a href="{% url 'account-orders' %}" class="dash-nav-link {% if active_tab == 'orders' %}active{% endif %}">
+			<i class="bx bx-package"></i><span>Orders</span>
+		</a>
+		<a href="{% url 'wishlist' %}" class="dash-nav-link {% if active_tab == 'wishlist' %}active{% endif %}">
+			<i class="bx bx-heart"></i><span>Wishlist</span>
+		</a>
+		<a href="{% url 'account-downloads' %}" class="dash-nav-link {% if active_tab == 'downloads' %}active{% endif %}">
+			<i class="bx bx-download"></i><span>Downloads</span>
+		</a>
+		<a href="{% url 'account-addresses' %}" class="dash-nav-link {% if active_tab == 'addresses' %}active{% endif %}">
+			<i class="bx bx-map"></i><span>Addresses</span>
+		</a>
+		<a href="{% url 'account-payment-methods' %}" class="dash-nav-link {% if active_tab == 'payments' %}active{% endif %}">
+			<i class="bx bx-credit-card"></i><span>Payment Methods</span>
+		</a>
+		<a href="{% url 'account-user-details' %}" class="dash-nav-link {% if active_tab == 'details' %}active{% endif %}">
+			<i class="bx bx-user"></i><span>Account Details</span>
+		</a>
+		<a href="{% url 'account-notifications' %}" class="dash-nav-link {% if active_tab == 'notifications' %}active{% endif %}">
+			<i class="bx bx-bell"></i><span>Notifications</span>
+			{% if unread_notifications %}<em class="dash-nav-count">{{ unread_notifications }}</em>{% endif %}
+		</a>
+		<a href="{% url 'account-support' %}" class="dash-nav-link {% if active_tab == 'support' %}active{% endif %}">
+			<i class="bx bx-support"></i><span>Support Tickets</span>
+		</a>
+		<a href="{% url 'user_logout' %}" class="dash-nav-link dash-nav-logout">
+			<i class="bx bx-log-out"></i><span>Logout</span>
+		</a>
+	</nav>
+</aside>

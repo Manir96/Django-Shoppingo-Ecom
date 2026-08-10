@@ -1,0 +1,143 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block extra_head %}
+<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+{% endblock %}
+
+{% block main-content %}
+<section class="error-page" data-error-shell="1">
+	<div class="container">
+		<nav aria-label="breadcrumb" class="mb-3">
+			<ol class="breadcrumb mb-0 small">
+				<li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+				<li class="breadcrumb-item active" aria-current="page">Error {{ error_code }}</li>
+			</ol>
+		</nav>
+
+		<div class="error-shell">
+			<div class="error-grid">
+				<div class="error-illu">
+					{% include 'errors/partials/illustrations.html' %}
+				</div>
+				<div>
+					<p class="error-code" aria-hidden="true">{{ error_code }}</p>
+					<h1 class="error-title">{{ error.headline }}</h1>
+					<p class="error-desc">{{ error.description }}</p>
+
+					{% if error.wait_hint %}
+					<div class="error-hint"><i class="bx bx-time-five"></i> {{ error.wait_hint }}</div>
+					{% endif %}
+					{% if error.show_downtime and maintenance_eta %}
+					<div class="error-hint"><i class="bx bx-wrench"></i> Estimated back: {{ maintenance_eta }}</div>
+					{% elif error.show_downtime %}
+					<div class="error-hint"><i class="bx bx-wrench"></i> We'll be back shortly.</div>
+					{% endif %}
+
+					<div class="error-actions">
+						{% if "retry" in error.actions %}
+						<a href="javascript:location.reload()" class="error-btn error-btn-primary"><i class="bx bx-refresh"></i> Retry</a>
+						{% endif %}
+						{% if "login" in error.actions %}
+						<a href="{% url 'customer_login' %}?next={{ request.path|urlencode }}" class="error-btn error-btn-primary"><i class="bx bx-log-in"></i> Login</a>
+						{% endif %}
+						{% if "register" in error.actions %}
+						<a href="{% url 'customer_register' %}" class="error-btn error-btn-secondary"><i class="bx bx-user-plus"></i> Register</a>
+						{% endif %}
+						{% if "dashboard" in error.actions %}
+						<a href="{% url 'account-dashboard' %}" class="error-btn error-btn-primary"><i class="bx bx-grid-alt"></i> Dashboard</a>
+						{% endif %}
+						{% if "home" in error.actions %}
+						<a href="{% url 'home' %}" class="error-btn {% if 'retry' in error.actions or 'login' in error.actions or 'dashboard' in error.actions %}error-btn-secondary{% else %}error-btn-primary{% endif %}"><i class="bx bx-home-alt"></i> Go Home</a>
+						{% endif %}
+						{% if "shop" in error.actions %}
+						<a href="{% url 'shop-categories' %}" class="error-btn error-btn-secondary"><i class="bx bx-store"></i> Continue Shopping</a>
+						{% endif %}
+						{% if "back" in error.actions %}
+						<a href="javascript:history.back()" class="error-btn error-btn-secondary"><i class="bx bx-arrow-back"></i> Go Back</a>
+						{% endif %}
+						{% if "support" in error.actions %}
+						<a href="{% url 'contact' %}" class="error-btn error-btn-ghost"><i class="bx bx-support"></i> Contact Support</a>
+						{% endif %}
+					</div>
+
+					{% if error.show_search %}
+					<div class="error-search">
+						<form action="{% url 'product-search' %}" method="get" role="search">
+							<div class="input-group">
+								<input type="search" name="q" class="form-control" placeholder="Search products..." aria-label="Search products" required>
+								<button class="btn" type="submit">Search</button>
+							</div>
+						</form>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+
+			{% if error.show_suggestions %}
+			<div class="error-extra">
+				<h3>Browse categories</h3>
+				<div class="error-cats">
+					{% for cat in browse_categories %}
+					<a class="error-cat" href="{% url 'produc_category_view' cat.slug %}">{{ cat.name }}</a>
+					{% endfor %}
+					<a class="error-cat" href="{% url 'shop-categories' %}">All categories</a>
+					<a class="error-cat" href="{% url 'home' %}">Continue shopping</a>
+				</div>
+
+				<h3>Popular products</h3>
+				{% if popular_products %}
+				<div class="error-prod-grid mb-4">
+					{% for product in popular_products %}
+					<a class="error-prod" href="{% url 'product-detail' product.slug %}">
+						<div class="error-prod-img">
+							{% with img=product.images.first %}
+							{% if img %}
+							<img src="{{ img.image.url }}" alt="{{ product.title }}" loading="lazy" width="200" height="200">
+							{% else %}
+							<img src="{% static 'assets/images/logo-icon.png' %}" alt="" loading="lazy" width="200" height="200">
+							{% endif %}
+							{% endwith %}
+						</div>
+						<div class="error-prod-body">
+							<div class="error-prod-title">{{ product.title }}</div>
+							<div class="error-prod-price">${{ product.orginal_price|default:product.price|floatformat:2 }}</div>
+						</div>
+					</a>
+					{% endfor %}
+				</div>
+				{% else %}
+				<p class="text-muted small mb-4">Explore the store for trending items.</p>
+				{% endif %}
+
+				{% if recent_views %}
+				<h3>Recently viewed</h3>
+				<div class="error-prod-grid">
+					{% for rv in recent_views %}
+					<a class="error-prod" href="{% url 'product-detail' rv.product.slug %}">
+						<div class="error-prod-img">
+							{% with img=rv.product.images.first %}
+							{% if img %}
+							<img src="{{ img.image.url }}" alt="{{ rv.product.title }}" loading="lazy" width="200" height="200">
+							{% else %}
+							<img src="{% static 'assets/images/logo-icon.png' %}" alt="" loading="lazy" width="200" height="200">
+							{% endif %}
+							{% endwith %}
+						</div>
+						<div class="error-prod-body">
+							<div class="error-prod-title">{{ rv.product.title }}</div>
+							<div class="error-prod-price">${{ rv.product.orginal_price|default:rv.product.price|floatformat:2 }}</div>
+						</div>
+					</a>
+					{% endfor %}
+				</div>
+				{% endif %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</section>
+{% endblock %}

@@ -10,9 +10,26 @@ from django.utils import timezone
 import logging
 logger = logging.getLogger(__name__)
 from shopingo.context_processors import cart_context
+from shopingo.services import (
+    StockError,
+    finalize_order,
+    send_order_confirmation_email,
+    validate_cart_stock,
+    validate_quantity_against_stock,
+)
+from shopingo.checkout_utils import (
+    apply_coupon_to_order,
+    get_valid_coupon,
+    process_demo_payment,
+    require_details,
+    require_draft_order,
+    require_payment_selected,
+    validate_shipping_details,
+)
 from django.utils.crypto import get_random_string
 from django.core.paginator import Paginator
 from django.db.models import Count, Q, F
+from django.views.decorators.http import require_http_methods
 
 
 # Create your views here.
@@ -21,71 +38,75 @@ from django.db.models import Count, Q, F
 from django.db.models import Count
 
 def home(request):
-    main_tags = ["Men Wear", "Women Wear", "Kids Wear"]
+    main_tags = ["Electronics", "Fashion", "Home & Kitchen", "Beauty", "Men Wear", "Women Wear", "Kids Wear"]
 
     tag_data = []
-
     for tag_name in main_tags:
         tag = Tag.objects.filter(name__iexact=tag_name).first()
-
         if not tag:
-            tag = Tag.objects.exclude(name__in=main_tags).first()
+            continue
+        product = (
+            Product.objects.filter(tags__tag=tag)
+            .prefetch_related("images")
+            .order_by("-is_featured", "-id")
+            .first()
+        )
+        if product:
+            tag_data.append({"tag": tag, "product": product})
+        if len(tag_data) >= 3:
+            break
 
-        if tag:
-            product = (
-                Product.objects.filter(tags__tag=tag)
-                .order_by("price")
-                .first()
-            )
+    if len(tag_data) < 3:
+        for tag in Tag.objects.all()[:6]:
+            if any(t["tag"].id == tag.id for t in tag_data):
+                continue
+            product = Product.objects.filter(tags__tag=tag).prefetch_related("images").first()
+            if product:
+                tag_data.append({"tag": tag, "product": product})
+            if len(tag_data) >= 3:
+                break
 
-            tag_data.append({
-                "tag": tag,
-                "product": product
-            })
+    featured_products = Product.objects.filter(is_featured=True).prefetch_related("images")[:12]
+    if not featured_products.exists():
+        featured_products = Product.objects.all().prefetch_related("images")[:12]
 
-    # Featured section er jonno
-    featured_products = (
-        Product.objects.filter(is_featured=True)
-        .prefetch_related("images")[:10]
-    )
-
-    # New Arrivals (main slider)
     new_arrivals = (
-        Product.objects.all()
+        Product.objects.filter(is_new_arrival=True)
         .prefetch_related("images")
-        .order_by("-created_at")[:10]
+        .order_by("-created_at")[:12]
     )
+    if not new_arrivals.exists():
+        new_arrivals = Product.objects.all().prefetch_related("images").order_by("-created_at")[:12]
 
-    # Category carousel
+    trending_products = Product.objects.filter(is_trending=True).prefetch_related("images")[:12]
+    popular_products = Product.objects.filter(is_popular=True).prefetch_related("images")[:12]
+    recommended_products = Product.objects.filter(is_recommended=True).prefetch_related("images")[:12]
+    flash_sale_products = Product.objects.filter(is_flash_sale=True).prefetch_related("images")[:12]
+
     cat = (
         Category.objects
         .annotate(product_count=Count("products"))
-        .filter(product_count__gt=0)
+        .filter(product_count__gt=0, is_active=True)
         .prefetch_related("products__images")
+        .order_by("menu_order", "name")
     )
 
-    # ---------- BOTTOM 4 LISTS ----------
-
-    # 1) Best Selling Products (orderitem related_name use kore)
     best_selling_products = (
-        Product.objects
-        .annotate(total_sold=Count("orderitem"))
-        .prefetch_related("images")
-        .order_by("-total_sold", "-id")[:4]
+        Product.objects.filter(is_bestseller=True).prefetch_related("images")[:8]
     )
+    if not best_selling_products.exists():
+        best_selling_products = (
+            Product.objects
+            .annotate(total_sold=Count("orderitem"))
+            .prefetch_related("images")
+            .order_by("-total_sold", "-id")[:8]
+        )
 
-    # 2) Featured Products (nicher choto list er jonno)
-    bottom_featured_products = featured_products[:4]
-
-    # 3) New Arrivals (nicher list er jonno)
-    bottom_new_arrivals = new_arrivals[:4]
-
-    # 4) Top Rated Products (wishlist count diye approx rating)
+    bottom_best_selling_products = list(best_selling_products[:4])
+    bottom_featured_products = list(featured_products[:4])
+    bottom_new_arrivals = list(new_arrivals[:4])
     top_rated_products = (
-        Product.objects
-        .annotate(wishlist_count=Count("wishlist"))
-        .prefetch_related("images")
-        .order_by("-wishlist_count", "-id")[:4]
+        Product.objects.prefetch_related("images").order_by("-rating", "-review_count")[:4]
     )
 
     context = {
@@ -93,9 +114,12 @@ def home(request):
         "featured_products": featured_products,
         "new_arrivals": new_arrivals,
         "categories": cat,
-
-        # bottom lists
+        "trending_products": trending_products,
+        "popular_products": popular_products,
+        "recommended_products": recommended_products,
+        "flash_sale_products": flash_sale_products,
         "best_selling_products": best_selling_products,
+        "bottom_best_selling_products": bottom_best_selling_products,
         "bottom_featured_products": bottom_featured_products,
         "bottom_new_arrivals": bottom_new_arrivals,
         "top_rated_products": top_rated_products,
@@ -110,17 +134,71 @@ def shop_categories(request):
 
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    
-    variations = product.variations.all()
-    colors = variations.values('color__name', 'color__code').distinct()
-    sizes = variations.values_list('size__name', flat=True).distinct()
+    if request.user.is_authenticated:
+        from accounts.account_services import track_recently_viewed
+        track_recently_viewed(request.user, product)
+
+    if request.method == "POST" and request.POST.get("form_type") == "product_review":
+        name = (request.POST.get("name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        rating = request.POST.get("rating") or "5"
+        comment = (request.POST.get("comment") or "").strip()
+
+        if not name or not email or not comment:
+            messages.error(request, "Please fill in your name, email, and review.")
+        else:
+            try:
+                rating_int = int(rating)
+            except (TypeError, ValueError):
+                rating_int = 5
+            rating_int = max(1, min(5, rating_int))
+
+            ProductReview.objects.create(
+                product=product,
+                user=request.user if request.user.is_authenticated else None,
+                name=name[:120],
+                email=email,
+                rating=rating_int,
+                comment=comment,
+                is_approved=True,
+            )
+            messages.success(request, "Thank you! Your review has been submitted.")
+            return redirect(f"{request.path}?tab=reviews")
+
+        return redirect(f"{request.path}?tab=reviews")
+
+    variations = product.variations.select_related("color", "size").all()
+    colors = list(
+        variations.exclude(color__isnull=True)
+        .exclude(color__code__isnull=True)
+        .exclude(color__code="")
+        .values("color__name", "color__code")
+        .distinct()
+    )
+    sizes = list(
+        variations.exclude(size__isnull=True)
+        .exclude(size__name__isnull=True)
+        .exclude(size__name="")
+        .values_list("size__name", flat=True)
+        .distinct()
+    )
     default_variation = variations.first()
-    quantity_range = range(1, default_variation.stock + 1) if default_variation and default_variation.stock > 0 else []
-    
-     # -------- Similar Products Logic --------
+
+    # Prefer product-level stock for the qty picker; cart validates per size/color
+    available_stock = 0
+    if product.stock and product.stock > 0:
+        available_stock = int(product.stock)
+    elif default_variation and default_variation.stock > 0:
+        available_stock = int(default_variation.stock)
+
+    max_qty = min(available_stock, 20) if available_stock else 0
+    quantity_range = range(1, max_qty + 1) if max_qty else []
+    has_sizes = bool(sizes)
+    has_colors = bool(colors)
+
+    # -------- Similar Products Logic --------
     similar_products = []
 
-    # Step 1️⃣: প্রথমে একই category এর product খুঁজো
     if product.category:
         similar_products = list(
             Product.objects.filter(category=product.category)
@@ -128,7 +206,6 @@ def product_detail(request, slug):
             .order_by('-id')[:8]
         )
 
-    # Step 2️⃣: যদি ৮টার কম হয়, তাহলে অন্য random product দাও
     if len(similar_products) < 8:
         extra_needed = 8 - len(similar_products)
         extra_products = list(
@@ -138,24 +215,31 @@ def product_detail(request, slug):
         )
         similar_products += extra_products
 
-    # Step 3️⃣: যদি মোট database এ ৮টার কম product থাকে, তাহলে যতটা আছে সব দেখাবে
     if not similar_products:
         similar_products = list(
             Product.objects.exclude(slug=product.slug).order_by('-id')
         )
 
-    # Step 4️⃣: প্রতিটি product এ প্রথম image attach করো
     for p in similar_products:
         p.first_image = ProductImage.objects.filter(product=p).first()
 
-    
+    reviews = product.reviews.filter(is_approved=True).order_by("-created_at")
+    review_count = reviews.count()
+    show_reviews_tab = request.GET.get("tab") == "reviews"
+
     context = {
         'product': product,
-        'quantity_range': quantity_range,   
+        'quantity_range': quantity_range,
         'colors': colors,
-        'sizes': sizes, 
+        'sizes': sizes,
+        'has_sizes': has_sizes,
+        'has_colors': has_colors,
+        'available_stock': available_stock,
         'similar_products': similar_products,
-    }   
+        'reviews': reviews,
+        'review_count': review_count,
+        'show_reviews_tab': show_reviews_tab,
+    }
     return render(request, 'products/product-details.html', context)
 
 def product_comparison(request):
@@ -197,27 +281,42 @@ def handle_product_action(request):
 
     # ---- ADD TO CART ----
     if action in ("cart", "add_to_cart"):
-        cart_item, created = Cart.objects.get_or_create(
-            user=request.user,
-            product=product,
-            defaults={"quantity": quantity, "color": color, "size": size},
-        )
-        if not created:
-            # If already exists, increment or update quantity as you prefer
-            try:
-                cart_item.quantity += int(quantity)
-            except Exception:
-                cart_item.quantity = (cart_item.quantity or 0) + 1
-                cart_item.color = color
-                cart_item.size = size
-                cart_item.save()
+        try:
+            qty = max(1, int(quantity))
+        except (TypeError, ValueError):
+            qty = 1
+
+        cart_item = Cart.objects.filter(user=request.user, product=product).first()
+        existing_qty = cart_item.quantity if cart_item else 0
+        try:
+            validate_quantity_against_stock(
+                product, qty, color=color, size=size, extra_in_cart=existing_qty
+            )
+        except StockError as exc:
+            if is_ajax:
+                return JsonResponse({"success": False, "message": str(exc)})
+            messages.error(request, str(exc))
+            return redirect(request.META.get("HTTP_REFERER", "home"))
+
+        if cart_item:
+            cart_item.quantity = existing_qty + qty
+            cart_item.color = color or cart_item.color
+            cart_item.size = size or cart_item.size
+            cart_item.save()
+        else:
+            Cart.objects.create(
+                user=request.user,
+                product=product,
+                quantity=qty,
+                color=color,
+                size=size,
+            )
 
         # Remove from wishlist if present
         Wishlist.objects.filter(user=request.user, product=product).delete()
 
         success_message = f"{product.title} added to your cart!"
         if is_ajax:
-            # return optional redirect_url if you want front-end to navigate
             return JsonResponse({"success": True, "message": success_message, "redirect_url": None})
         messages.success(request, success_message)
         return redirect("shopping-cart")
@@ -264,30 +363,29 @@ def wishlist(request):
 def delete_order_item(request, item_id):
     order_item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
     order = order_item.order
+    if order.status == Order.STATUS_PLACED:
+        messages.error(request, "Placed orders cannot be modified.")
+        return redirect("checkout-review")
 
-    # Delete the item
     order_item.delete()
 
-    # Recalculate order totals
     order_items = order.items.all()
+    order.subtotal = sum(item.item_total for item in order_items) if order_items.exists() else Decimal("0.00")
 
-    if order_items.exists():
-        order.subtotal = sum(item.item_total for item in order_items)
-    else:
-        order.subtotal = 0
+    coupon_code = request.session.get("coupon_code")
+    discount = Decimal("0.00")
+    if coupon_code and order.subtotal > 0:
+        try:
+            coupon = Coupon.objects.get(code__iexact=coupon_code, active=True)
+            now = timezone.now()
+            if coupon.valid_from <= now <= coupon.valid_to and coupon.discount_percent:
+                discount = (order.subtotal * Decimal(coupon.discount_percent)) / Decimal("100")
+        except Coupon.DoesNotExist:
+            pass
 
-    # Shipping stays same (if fixed)
-    shipping = order.shipping_charge
-
-    # Coupon apply থাকলে discount পুনঃগণনা
-    if order.discount > 0:
-        # ধরুন percentage ভিত্তিক coupon ছিল
-        order.discount = (order.subtotal * order.coupon.discount_percent / 100) if order.subtotal > 0 else 0
-
-    # Total amount update
-    order.total_amount = order.subtotal + shipping - order.discount
-
-    order.save()
+    order.discount = discount
+    order.total_amount = order.subtotal + order.shipping_charge - order.discount
+    order.save(update_fields=["subtotal", "discount", "total_amount"])
 
     return redirect("checkout-review")
 
@@ -333,6 +431,12 @@ def remove_cart_item(request, item_id):
 @login_required(login_url='customer_login')
 def shopping_cart(request):
     if request.method == "POST":
+        stock_errors = validate_cart_stock(request.user)
+        if stock_errors:
+            for err in stock_errors:
+                messages.error(request, err)
+            return redirect('shopping-cart')
+
         # shipping তথ্য সেভ করব session-এ
         country_id = request.POST.get('country_id')
         division_id = request.POST.get('division_id')
@@ -348,6 +452,9 @@ def shopping_cart(request):
 
         # এখন কার্টের তথ্য সেভ করব
         cart_items = Cart.objects.filter(user=request.user).select_related('product')
+        if not cart_items.exists():
+            messages.warning(request, "Your cart is empty.")
+            return redirect('shopping-cart')
 
         cart_data = []
         for item in cart_items:
@@ -374,40 +481,69 @@ def shopping_cart(request):
 def checkout_details(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
     if not cart_items.exists():
+        messages.warning(request, "Your cart is empty.")
         return redirect('shopping-cart')
 
-    # --- Cart Totals ---
     cart_data = cart_context(request)
-    subtotal = cart_data['cart_subtotal']
-    shipping_amount = cart_data['cart_shipping']
-    coupon_discount = cart_data['cart_coupon_discount']
-    total = cart_data['cart_order_total']
+    from accounts.account_services import default_checkout_address
+    last_address = default_checkout_address(request.user)
+    shipping_info = dict(request.session.get('shipping_info') or {})
 
-    # --- Handle POST request ---
+    # Prefill from session, else default saved address, else user profile
+    if not shipping_info.get('first_name') and last_address:
+        shipping_info = {
+            'first_name': last_address.first_name,
+            'last_name': last_address.last_name,
+            'email': last_address.email,
+            'phone': last_address.phone,
+            'country_id': shipping_info.get('country_id', ''),
+            'country_name': last_address.country or '',
+            'division_id': last_address.division or '',
+            'district_id': last_address.district or '',
+            'zip_code': last_address.zip_code or '',
+            'address1': last_address.address1 or '',
+            'address2': last_address.address2 or '',
+        }
+    if not shipping_info.get('first_name'):
+        shipping_info.setdefault('first_name', request.user.first_name or '')
+        shipping_info.setdefault('last_name', request.user.last_name or '')
+        shipping_info.setdefault('email', request.user.email or '')
+
     if request.method == "POST":
-        # Form Data Receive
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        country_id = request.POST.get('country_id')
-        division_name = request.POST.get('division_id')
-        district_name = request.POST.get('district_id')
-        zip_code = request.POST.get('zip_code')
-        address1 = request.POST.get('address1')
-        address2 = request.POST.get('address2')
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        country_id = (request.POST.get('country_id') or '').strip()
+        division_name = (request.POST.get('division_id') or '').strip()
+        district_name = (request.POST.get('district_id') or '').strip()
+        zip_code = (request.POST.get('zip_code') or '').strip()
+        address1 = (request.POST.get('address1') or '').strip()
+        address2 = (request.POST.get('address2') or '').strip()
 
-        # Resolve Country Name
-        country_name_value = None
+        country_name_value = ''
         if country_id:
             try:
-                country = CountryName.objects.get(id=country_id)
-                country_name_value = country.nameName
-            except CountryName.DoesNotExist:
-                pass
+                country_name_value = CountryName.objects.get(id=country_id).nameName
+            except (CountryName.DoesNotExist, ValueError):
+                country_name_value = ''
 
-        # --- Save to Session ---
-        request.session['shipping_info'] = {
+        form_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+            'phone': phone,
+            'country_id': country_id,
+            'division': division_name,
+            'district': district_name,
+            'zip_code': zip_code,
+            'address1': address1,
+        }
+        errors = validate_shipping_details(form_data)
+        if not country_name_value:
+            errors.append("Please select a valid country.")
+
+        shipping_info = {
             'first_name': first_name,
             'last_name': last_name,
             'email': email,
@@ -421,287 +557,339 @@ def checkout_details(request):
             'address2': address2,
         }
 
-        # --- Save to ShippingAddress Table ---
-        ShippingAddress.objects.create(
-            user=request.user,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            phone=phone,
-            country=country_name_value,
-            division=division_name,
-            district=district_name,
-            zip_code=zip_code,
-            address1=address1,
-            address2=address2,
-        )
-
-        # --- Next Step Redirect ---
-        return redirect('checkout-shipping')
-
-    # --- GET Request ---
-    shipping_info = request.session.get('shipping_info', {})
-
-    # --- Division & District Display ---
-    division_display = None
-    district_display = None
-
-    if shipping_info.get('division_id'):
-        try:
-            division = Division.objects.get(id=shipping_info['division_id'])
-            division_display = getattr(division, 'name', None) or getattr(division, 'division_name', None)
-        except Division.DoesNotExist:
-            pass
-
-    if shipping_info.get('district_id'):
-        try:
-            district = District.objects.get(id=shipping_info['district_id'])
-            district_display = getattr(district, 'name', None) or getattr(district, 'district_name', None)
-        except District.DoesNotExist:
-            pass
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            request.session['shipping_info'] = shipping_info
+            request.session.modified = True
+            addr = ShippingAddress.objects.create(
+                user=request.user,
+                label="Checkout",
+                address_type=ShippingAddress.TYPE_SHIPPING,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                country=country_name_value,
+                division=division_name,
+                district=district_name,
+                zip_code=zip_code,
+                address1=address1,
+                address2=address2 or address1,
+                is_default=not ShippingAddress.objects.filter(
+                    user=request.user, address_type=ShippingAddress.TYPE_SHIPPING, is_default=True
+                ).exists(),
+            )
+            messages.success(request, "Shipping details saved.")
+            return redirect('checkout-shipping')
 
     context = {
         'cart_items': cart_items,
-        'subtotal': subtotal,
-        'shipping_amount': shipping_amount,
-        'coupon_discount': coupon_discount,
-        'order_total': total,
+        'subtotal': cart_data['cart_subtotal'],
+        'shipping_amount': cart_data['cart_shipping'],
+        'coupon_discount': cart_data['cart_coupon_discount'],
+        'order_total': cart_data['cart_order_total'],
         'country_name': CountryName.objects.all(),
         'shipping_info': shipping_info,
-        'division_display': division_display,
-        'district_display': district_display,
+        'division_display': shipping_info.get('division_id', ''),
+        'district_display': shipping_info.get('district_id', ''),
     }
     return render(request, 'checkout/checkout-details.html', context)
 
 
-
 @login_required(login_url='customer_login')
 def checkout_shipping(request):
-    shipping_methods = ShippingCharge.objects.filter(active=True)
-    country_name = CountryName.objects.all()
+    blocked = require_details(request)
+    if blocked:
+        return blocked
 
+    shipping_methods = ShippingCharge.objects.filter(active=True)
     cart_data = cart_context(request)
     subtotal = cart_data['cart_subtotal']
     coupon_discount = cart_data['cart_coupon_discount']
-
-    # --- Get shipping info from session ---
     shipping_info = request.session.get('shipping_info', {})
-
-    # 🟢 Retrieve latest ShippingAddress from DB
     shipping_address = ShippingAddress.objects.filter(user=request.user).order_by('-created_at').first()
+    selected_id = None
+    order_id = request.session.get('order_id')
+    if order_id:
+        draft = Order.objects.filter(id=order_id, user=request.user, status=Order.STATUS_DRAFT).first()
+        if draft and draft.shipping_method_id:
+            selected_id = draft.shipping_method_id
 
     if request.method == "POST":
+        stock_errors = validate_cart_stock(request.user)
+        if stock_errors:
+            for err in stock_errors:
+                messages.error(request, err)
+            return redirect("shopping-cart")
+
         selected_method_id = request.POST.get("shipping_method")
-        if selected_method_id:
-            try:
-                shipping_method = ShippingCharge.objects.get(id=selected_method_id)
-            except ShippingCharge.DoesNotExist:
-                messages.error(request, "Invalid shipping method.")
-                return redirect("checkout-shipping")
+        if not selected_method_id:
+            messages.error(request, "Please select a shipping method.")
+            return redirect("checkout-shipping")
 
-            total_with_shipping = subtotal + shipping_method.charge_amount - coupon_discount
+        try:
+            shipping_method = ShippingCharge.objects.get(id=selected_method_id, active=True)
+        except ShippingCharge.DoesNotExist:
+            messages.error(request, "Invalid shipping method.")
+            return redirect("checkout-shipping")
 
-            # 🟢 Create Order with shipping_address linked
+        if not shipping_address:
+            messages.error(request, "Please add a shipping address first.")
+            return redirect("checkout-details")
+
+        total_with_shipping = subtotal + shipping_method.charge_amount - coupon_discount
+
+        order = None
+        if order_id:
+            order = Order.objects.filter(
+                id=order_id, user=request.user, status=Order.STATUS_DRAFT
+            ).first()
+
+        if order:
+            order.shipping_method = shipping_method
+            order.shipping_address = shipping_address
+            order.subtotal = subtotal
+            order.discount = coupon_discount
+            order.shipping_charge = shipping_method.charge_amount
+            order.total_amount = total_with_shipping
+            order.save()
+        else:
             order = Order.objects.create(
                 user=request.user,
                 shipping_method=shipping_method,
-                shipping_address=shipping_address,   # ✅ FIXED LINE
+                shipping_address=shipping_address,
                 subtotal=subtotal,
                 discount=coupon_discount,
                 shipping_charge=shipping_method.charge_amount,
                 total_amount=total_with_shipping,
+                status=Order.STATUS_DRAFT,
             )
 
-            # --- Save order id in session ---
-            request.session['order_id'] = order.id
-            messages.success(request, "Order created successfully!")
+        request.session['order_id'] = order.id
+        request.session['coupon_discount'] = str(coupon_discount)
+        request.session.modified = True
+        messages.success(request, "Shipping method saved.")
+        return redirect("checkout-payment")
 
-            # --- Redirect to Payment Page ---
-            return redirect("checkout-payment")
+    shipping_amount = Decimal('0.00')
+    if selected_id:
+        m = shipping_methods.filter(id=selected_id).first()
+        if m:
+            shipping_amount = m.charge_amount
 
     context = {
-        'country_name': country_name,
+        'country_name': CountryName.objects.all(),
         'shipping_methods': shipping_methods,
         'subtotal': subtotal,
         'coupon_discount': coupon_discount,
         'shipping_info': shipping_info,
+        'shipping_amount': shipping_amount,
+        'order_total': subtotal + shipping_amount - coupon_discount,
+        'selected_shipping_id': selected_id,
     }
     return render(request, 'checkout/checkout-shipping.html', context)
 
 
-@login_required
+@login_required(login_url='customer_login')
 def checkout_payment(request):
-    order_id = request.session.get('order_id')
-    if not order_id:
-        messages.error(request, "No order found. Please select a shipping method first.")
-        return redirect('checkout-shipping')
-
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order_or_redirect = require_draft_order(request)
+    if not isinstance(order_or_redirect, Order):
+        return order_or_redirect
+    order = order_or_redirect
 
     if request.method == "POST":
-        payment_method = request.POST.get('payment_method')
+        payment_method = (request.POST.get('payment_method') or '').upper()
         if not payment_method:
             messages.error(request, "Please select a payment method.")
             return redirect('checkout-payment')
 
-        order.payment_method = payment_method
+        stock_errors = validate_cart_stock(request.user)
+        if stock_errors:
+            for err in stock_errors:
+                messages.error(request, err)
+            return redirect('shopping-cart')
 
-        # --- Coupon / discount logic ---
-        coupon_code = request.session.get('coupon_code')
-        if coupon_code:
-            try:
-                coupon = Coupon.objects.get(code__iexact=coupon_code, active=True)
-                now = timezone.now()
-                if coupon.valid_from <= now <= coupon.valid_to:
-                    discount_amount = (order.subtotal * Decimal(coupon.discount_percent)) / 100
-                    order.discount = discount_amount
-            except Coupon.DoesNotExist:
-                order.discount = Decimal('0.00')
-        else:
-            order.discount = Decimal('0.00')
+        apply_coupon_to_order(order, request)
 
-        # --- Calculate totals ---
-        order.total_amount = order.subtotal + order.shipping_charge - order.discount
-        order.save()
+        order.items.all().delete()
+        cart_items = Cart.objects.filter(user=request.user).select_related('product')
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty.")
+            return redirect('shopping-cart')
 
-        # --- Create OrderItems if they don't exist yet ---
-        cart_items = Cart.objects.filter(user=request.user)
         for item in cart_items:
-            # Avoid creating duplicates if user revisits payment page
-            if not OrderItem.objects.filter(order=order, product=item.product, user=request.user).exists():
-                unit_price = item.product.orginal_price
-                total_price = unit_price * item.quantity
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    user=request.user,
-                    color=item.color,
-                    size=item.size,
-                    price=unit_price,
-                    item_total=total_price,
-                    payment_method=payment_method
-                )
+            unit_price = item.product.orginal_price or item.product.price
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                user=request.user,
+                color=item.color or '',
+                size=item.size or '',
+                price=unit_price,
+                item_total=unit_price * item.quantity,
+                payment_method=payment_method,
+            )
 
-        # ✅ Do NOT clear cart yet
+        payment, errors = process_demo_payment(order, payment_method, request.POST)
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return redirect('checkout-payment')
 
-        messages.success(request, "Payment method saved. Review your order before completing.")
+        messages.success(
+            request,
+            f"Payment method saved: {payment.get_method_display()}. Review your order."
+        )
         return redirect('checkout-review')
-    
-    context = {
-    'order': order,
-    'order_data': order,  # same data, different name
-    }
 
+    apply_coupon_to_order(order, request)
+    context = {
+        'order': order,
+        'order_data': order,
+        'payment': getattr(order, 'payment', None),
+        'selected_method': getattr(getattr(order, 'payment', None), 'method', 'COD'),
+    }
     return render(request, 'checkout/checkout-payment.html', context)
 
 
 @login_required(login_url='customer_login')
 def checkout_review(request):
-    order_id = request.session.get('order_id')
-    if not order_id:
-        messages.error(request, "No order found.")
-        return redirect('shopping-cart')
+    order_or_redirect = require_payment_selected(request)
+    if not isinstance(order_or_redirect, Order):
+        return order_or_redirect
+    order = order_or_redirect
 
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-    order_items = order.items.all()
-    address = order.shipping_address
+    if order.status == Order.STATUS_PLACED and hasattr(order, 'completion'):
+        return redirect('checkout-complete', order_id=order.id)
 
-    # Coupon check
-    coupon_code = request.session.get("coupon_code")
-    if coupon_code:
-        try:
-            coupon = Coupon.objects.get(code__iexact=coupon_code, active=True)
-            now = timezone.now()
-            if coupon.valid_from <= now <= coupon.valid_to:
-                discount_amount = (order.subtotal * coupon.discount_percent) / 100
-                order.discount = discount_amount
-                order.total_amount = order.subtotal + order.shipping_charge - discount_amount
-            else:
-                messages.warning(request, "Coupon expired.")
-        except Coupon.DoesNotExist:
-            messages.warning(request, "Invalid coupon code.")
-    else:
-        order.discount = 0
-        order.total_amount = order.subtotal + order.shipping_charge
-
-    order.save(update_fields=["discount", "total_amount"])
+    apply_coupon_to_order(order, request)
+    payment = getattr(order, 'payment', None)
+    # Keep payment amount in sync with totals
+    if payment:
+        payment.amount = order.total_amount
+        payment.save(update_fields=['amount'])
 
     context = {
-    "order": order,
-    "order_items": order_items,
-    "address": address,  # ✅ এখন null হবে না
+        "order": order,
+        "order_items": order.items.select_related('product'),
+        "address": order.shipping_address,
+        "payment": payment,
+        "shipping_method": order.shipping_method,
     }
     return render(request, "checkout/checkout-review.html", context)
 
 
-
-
-
 @login_required(login_url='customer_login')
+@require_http_methods(["GET", "POST"])
 def checkout_complete(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    order_items = order.items.all()
-    address = order.shipping_address
 
-    if not order_items.exists():
+    # Idempotent: already placed
+    if order.status == Order.STATUS_PLACED and hasattr(order, 'completion'):
+        invoice = getattr(order, 'invoice', None)
+        return render(
+            request,
+            "checkout/checkout-complete.html",
+            {
+                "completed_order": order.completion,
+                "invoice": invoice,
+                "payment": getattr(order, 'payment', None),
+            },
+        )
+
+    if request.method != "POST":
+        return redirect('checkout-review')
+
+    if not order.items.exists():
         messages.error(request, "No items in your order.")
         return redirect('shopping-cart')
 
-    # Prepare snapshot data
-    product_info = []
-    for item in order_items:
-        product_info.append({
-            "title": item.product.title,
-            "quantity": item.quantity,
-            "price": float(item.item_total),
-            "size": item.size,
-            "color": item.color,
-        })
+    stock_errors = validate_cart_stock(request.user)
+    if stock_errors:
+        for err in stock_errors:
+            messages.error(request, err)
+        return redirect('shopping-cart')
 
-    customer_info = {
-        "name": f"{address.first_name} {address.last_name}" if address else "",
-        "phone": address.phone if address else "",
-        "email": address.email if address else "",
-        "address1": address.address1 if address else "",
-        "address2": address.address2 if address else "",
-        "district": address.district if address else "",
-        "division": address.division if address else "",
-        "country": address.country if address else "",
-    }
+    try:
+        completed_order, invoice, payment = finalize_order(order)
+    except StockError as exc:
+        messages.error(request, str(exc))
+        return redirect('shopping-cart')
 
-    tracking_id = get_random_string(length=12).upper()
-
-    completed_order = CompletedOrder.objects.create(
-        tracking_id=tracking_id,
-        shipping_address=address,
-        order=order,
-        total_amount=order.total_amount,
-        customer_info=customer_info,
-        product_info=product_info
-    )
-
-    completed_order.order_items.set(order_items)
-
-    # 🟢 Clear order items
-    # order.items.all().delete()
-
-    # 🟢 Clear cart items
     Cart.objects.filter(user=request.user).delete()
-
-    # 🟢 Clear session data (optional)
     request.session.pop('order_id', None)
     request.session.pop('coupon_code', None)
     request.session.pop('shipping_info', None)
+    request.session.pop('cart_data', None)
 
-    return render(request, "checkout/checkout-complete.html", {"completed_order": completed_order})
+    send_order_confirmation_email(order, completed_order, invoice)
+    messages.success(request, "Your order has been placed successfully.")
 
+    return render(
+        request,
+        "checkout/checkout-complete.html",
+        {
+            "completed_order": completed_order,
+            "invoice": invoice,
+            "payment": payment,
+        },
+    )
 
 
 def order_tracking(request):
-    order_data = CompletedOrder.objects.first()
+    order_data = None
+    tracking_id = (request.GET.get('tracking_id') or request.POST.get('tracking_id') or '').strip()
 
-    return render(request, 'orders/order-tracking.html', {'order_data': order_data})
+    if request.method == "POST" or tracking_id:
+        if not tracking_id:
+            messages.error(request, "Please enter a tracking ID.")
+        else:
+            order_data = (
+                CompletedOrder.objects
+                .select_related(
+                    'order',
+                    'order__order_status',
+                    'shipping_address',
+                    'order__payment',
+                    'order__invoice',
+                )
+                .filter(tracking_id__iexact=tracking_id)
+                .first()
+            )
+            if not order_data:
+                messages.error(request, "No order found for that tracking ID.")
+
+    return render(
+        request,
+        'orders/order-tracking.html',
+        {
+            'order_data': order_data,
+            'tracking_id': tracking_id,
+        },
+    )
+
+
+@login_required(login_url='customer_login')
+def invoice_detail(request, invoice_number):
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('order', 'completed_order', 'order__payment', 'order__shipping_address'),
+        invoice_number=invoice_number,
+        order__user=request.user,
+    )
+    return render(
+        request,
+        'orders/invoice.html',
+        {
+            'invoice': invoice,
+            'order': invoice.order,
+            'completed_order': invoice.completed_order,
+            'payment': getattr(invoice.order, 'payment', None),
+            'items': invoice.order.items.select_related('product'),
+        },
+    )
 
 
 def about_page(request):
@@ -1310,77 +1498,96 @@ def update_cart_quantity(request):
     quantity = request.POST.get("quantity")
 
     try:
-        item = Cart.objects.get(id=item_id, user=request.user)
+        item = Cart.objects.select_related('product').get(id=item_id, user=request.user)
         quantity = int(quantity)
         if quantity < 1:
             quantity = 1
+        try:
+            validate_quantity_against_stock(
+                item.product, quantity, color=item.color, size=item.size
+            )
+        except StockError as exc:
+            return JsonResponse({"success": False, "message": str(exc)})
+
         item.quantity = quantity
         item.save()
 
-        # Calculate updated totals
-        item_total = item.product.orginal_price * item.quantity
-        cart_items = Cart.objects.filter(user=request.user)
-        cart_subtotal = sum(i.product.orginal_price * i.quantity for i in cart_items)
-        cart_total_items = sum(i.quantity for i in cart_items)
-
+        data = cart_context(request)
+        item_total = (item.product.orginal_price or item.product.price) * item.quantity
         return JsonResponse({
             "success": True,
             "item_total": f"{item_total:.2f}",
-            "cart_subtotal": f"{cart_subtotal:.2f}",
-            "cart_total_items": cart_total_items
+            "cart_subtotal": f"{data['cart_subtotal']:.2f}",
+            "cart_shipping": f"{data['cart_shipping']:.2f}",
+            "cart_coupon_discount": f"{data['cart_coupon_discount']:.2f}",
+            "cart_order_total": f"{data['cart_order_total']:.2f}",
+            "cart_total_items": data["cart_total_items"],
         })
     except Cart.DoesNotExist:
         return JsonResponse({"success": False, "message": "Item not found."})
+    except (TypeError, ValueError):
+        return JsonResponse({"success": False, "message": "Invalid quantity."})
 
+@login_required(login_url='customer_login')
+@require_POST
 def apply_coupon(request):
-    if request.method == "POST":
-        code = request.POST.get("coupon_code", "").strip()
-        if not code:
-            messages.warning(request, "Please enter a coupon code.")
-            return redirect(request.META.get("HTTP_REFERER", "cart"))
+    code = (request.POST.get("coupon_code") or "").strip()
+    referer = request.META.get("HTTP_REFERER") or "/shopping-cart/"
+    if not code:
+        messages.warning(request, "Please enter a coupon code.")
+        return redirect(referer)
 
-        try:
-            coupon = Coupon.objects.get(code__iexact=code)
-        except Coupon.DoesNotExist:
-            messages.error(request, "Invalid coupon code.")
-            return redirect(request.META.get("HTTP_REFERER", "cart"))
+    coupon = get_valid_coupon(code)
+    if not coupon:
+        # Distinguish invalid vs expired
+        exists = Coupon.objects.filter(code__iexact=code).exists()
+        messages.error(
+            request,
+            "This coupon is expired or inactive." if exists else "Invalid coupon code.",
+        )
+        return redirect(referer)
 
-        # Check if coupon is valid
-        now = timezone.now()
-        if not coupon.active or not (coupon.valid_from <= now <= coupon.valid_to):
-            messages.error(request, "This coupon is not valid or expired.")
-            return redirect(request.META.get("HTTP_REFERER", "cart"))
+    request.session["coupon_code"] = coupon.code
+    # Refresh discount amount via cart context
+    data = cart_context(request)
+    request.session["coupon_discount"] = str(data["cart_coupon_discount"])
+    request.session.modified = True
 
-        # Save coupon in session
-        request.session["coupon_code"] = coupon.code
-        messages.success(request, f"Coupon '{coupon.code}' applied successfully ({coupon.discount_percent}% off).")
+    order_id = request.session.get("order_id")
+    if order_id:
+        order = Order.objects.filter(
+            id=order_id, user=request.user, status=Order.STATUS_DRAFT
+        ).first()
+        if order:
+            apply_coupon_to_order(order, request)
 
-    return redirect(request.META.get("HTTP_REFERER", "cart"))
+    messages.success(
+        request,
+        f"Coupon '{coupon.code}' applied ({coupon.discount_percent}% off).",
+    )
+    return redirect(referer)
 
-from shopingo.context_processors import cart_context
 
+@login_required(login_url='customer_login')
+@require_POST
 def remove_coupon(request):
     request.session.pop("coupon_code", None)
     request.session.pop("coupon_discount", None)
+    request.session.modified = True
     messages.success(request, "Coupon removed.")
 
-    # 🧮 Recalculate totals
     cart_data = cart_context(request)
-    subtotal = cart_data['cart_subtotal']
-    shipping = cart_data['cart_shipping']
+    order_id = request.session.get("order_id")
+    if order_id:
+        order = Order.objects.filter(
+            id=order_id, user=request.user, status=Order.STATUS_DRAFT
+        ).first()
+        if order:
+            order.discount = Decimal("0.00")
+            order.total_amount = order.subtotal + order.shipping_charge
+            order.save(update_fields=["discount", "total_amount"])
 
-    # Optional: যদি তুমি order instance আপডেট করতে চাও
-    if 'order_id' in request.session:
-        from .models import Order
-        try:
-            order = Order.objects.get(id=request.session['order_id'])
-            order.discount = 0
-            order.total_amount = subtotal + shipping
-            order.save()
-        except Order.DoesNotExist:
-            pass
-
-    return redirect(request.META.get("HTTP_REFERER", "shop-cart"))
+    return redirect(request.META.get("HTTP_REFERER") or "/shopping-cart/")
 
 
 

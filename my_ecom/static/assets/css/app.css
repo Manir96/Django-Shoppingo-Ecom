@@ -1,4 +1,4 @@
-/*
+﻿/*
 Template Name: Shopingo - eCommerce HTML Template
 Author: codervent
 Email: codervent@gmail.com
@@ -343,29 +343,89 @@ a {
 
 
 
-/* Product Effect */
+/* Product Effect ? uniform square cards (Amazon/Daraz style) */
+
+.product-grid .row {
+	align-items: stretch;
+}
 
 .product-grid .card {
 	border: 0;
 	border-radius: 0;
-	overflow: hidden;
+	overflow: visible;
 	background-color: #ffffff;
 	box-shadow: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 	-webkit-transition: 0.4s ease;
 	transition: 0.4s ease;
-  }
-/* 
+}
 
-  .product-grid .card:hover {
-	box-shadow: 0 2px 6px 0 rgb(218 218 253 / 55%), 0 2px 6px 0 rgb(206 206 238 / 44%);
-  } */
+.product-grid .card .card-body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+}
 
-  .product-grid .card img {
-	-webkit-transition: 0.4s ease;
-	transition: 0.4s ease;
-	border-radius: 0;
-  }
+.product-grid .card .product-short-title {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	min-height: 2.6em;
+}
 
+.product-grid .card .product-image,
+.product-grid .card > .position-relative.overflow-hidden {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	overflow: hidden;
+	border-radius: 12px;
+	background-color: #f3f4f6;
+	flex-shrink: 0;
+}
+
+.product-grid .card .product-image > a,
+.product-grid .card > .position-relative.overflow-hidden > a {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.product-grid .card .product-image img,
+.product-grid .card > .position-relative.overflow-hidden img,
+.product-grid .card img.img-fluid,
+.product-grid .card img.card-img-top {
+	width: 100% !important;
+	height: 100% !important;
+	max-width: none !important;
+	object-fit: cover;
+	object-position: center;
+	border-radius: 12px;
+	display: block;
+	-webkit-transition: transform 0.3s ease;
+	transition: transform 0.3s ease;
+}
+
+.product-grid .card:hover .product-image img,
+.product-grid .card:hover > .position-relative.overflow-hidden img {
+	transform: scale(1.05);
+}
+
+/* Owl carousel product items ? same square ratio */
+.product-grid .new-arrivals .item .card,
+.product-grid .owl-carousel .item .card {
+	height: 100%;
+}
+.product-grid .new-arrivals .item .product-image,
+.product-grid .owl-carousel .item .product-image,
+.product-grid .new-arrivals .item > .card > .position-relative.overflow-hidden,
+.product-grid .owl-carousel .item > .card > .position-relative.overflow-hidden {
+	max-width: 100%;
+}
 
 .add-cart a{
 	color: rgb(25, 22, 22);
@@ -471,16 +531,23 @@ a {
 .product-sharing .btn-social {
 	width: 42px;
     height: 42px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
     border: 0px solid #dee2e6;
     border-radius: 50%;
-    color: #ffffff;
+    color: #ffffff !important;
     font-weight: 600;
     background-color: #ffffff;
     cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.product-sharing a.btn-social:hover {
+	color: #ffffff !important;
+	opacity: 0.9;
+	transform: translateY(-2px);
 }
 
 .product-more-info .nav-link {
@@ -1459,6 +1526,9 @@ ul.categories-list li {
 .bg-youtube {
     background-color: #e2251f !important;
 }
+.bg-whatsapp {
+    background-color: #25d366 !important;
+}
 .bg-pinterest {
     background-color: #c8232c !important;
 }
@@ -2024,3 +2094,182 @@ body.bg-theme15 {
 	  }
 }
 
+
+/* ===== Shopingo Mega Menu ===== */
+.shopingo-mega-dropdown { position: static; }
+.shopingo-mega-menu {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100%;
+  max-width: 1140px;
+  margin: 0.35rem auto 0;
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+.shopingo-mega-inner { padding: 1.25rem 1.5rem 1.5rem; }
+.shopingo-mega-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 280px;
+  gap: 1.25rem 1.5rem;
+  align-items: start;
+}
+.shopingo-mega-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+}
+.shopingo-mega-heading i {
+  font-size: 1.25rem;
+  color: #1a1a1a;
+}
+.shopingo-mega-heading:hover { color: #0d6efd; }
+.shopingo-mega-links li { margin: 0; }
+.shopingo-mega-links a {
+  display: block;
+  padding: 0.35rem 0;
+  color: #444;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color .18s ease, padding-left .18s ease;
+}
+.shopingo-mega-links a:hover {
+  color: #0d6efd;
+  padding-left: 0.35rem;
+}
+.shopingo-mega-viewall {
+  display: inline-block;
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0d6efd;
+  text-decoration: none;
+}
+.shopingo-mega-promo {
+  position: relative;
+  min-height: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.shopingo-mega-promo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  transition: transform .4s ease;
+}
+.shopingo-mega-promo:hover img { transform: scale(1.05); }
+.shopingo-mega-promo-copy {
+  position: relative;
+  z-index: 1;
+  padding: 1.1rem;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0,0,0,.75), transparent);
+}
+.shopingo-mega-promo-copy .eyebrow {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+  opacity: 0.85;
+}
+.shopingo-mega-promo-copy h5 {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.shopingo-mega-promo-copy p {
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.92;
+}
+@media (max-width: 1199.98px) {
+  .shopingo-mega-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767.98px) {
+  .shopingo-mega-menu {
+    max-width: 100%;
+    border-radius: 0;
+  }
+  .shopingo-mega-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 992px) {
+  .shopingo-mega-dropdown:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .shopingo-mega-menu {
+    animation: shopingoMegaIn .2s ease;
+  }
+}
+@keyframes shopingoMegaIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Footer Popular Tags ? keep even with other columns */
+.footer-section3 .footer-tags-box {
+  max-height: 210px;
+  overflow: hidden;
+  align-content: flex-start;
+}
+.footer-section3 .footer-tag-btn {
+  font-size: 12px;
+  padding: 0.2rem 0.55rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* List-view product thumbs — square crop */
+.product-grid.d-flex .card .col-md-4,
+.product-grid .card .row > .col-md-4 {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  max-width: 220px;
+}
+.product-grid.d-flex .card .col-md-4 img,
+.product-grid .card .row > .col-md-4 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 12px;
+}
+
+/* Product detail gallery main slides */
+.image-zoom-section .product-gallery .item {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f3f4f6;
+}
+.image-zoom-section .product-gallery .item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 12px;
+}

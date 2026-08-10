@@ -1,9 +1,13 @@
 from django.urls import path
 from shopingo import views
+from shopingo import error_views
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('shop-categories/', views.shop_categories, name='shop-categories'),
+    path('search/', error_views.product_search, name='product-search'),
+    # Branded error page previews (QA + ops) — correct status codes
+    path('errors/<int:code>/', error_views.preview_error, name='error-preview'),
     path('product-detail/<slug:slug>/', views.product_detail, name='product-detail'),
     path('product-comparison/', views.product_comparison, name='product-comparison'),
     path('starter-page/', views.starter_page, name='starter-page'),
@@ -14,6 +18,7 @@ urlpatterns = [
     path('checkout-details/', views.checkout_details, name='checkout-details'),
     path('checkout-payment/', views.checkout_payment, name='checkout-payment'),
     path('checkout-complete/<int:order_id>/', views.checkout_complete, name='checkout-complete'),
+    path('invoice/<str:invoice_number>/', views.invoice_detail, name='invoice-detail'),
 
     
     path('about/', views.about_page, name='about'),

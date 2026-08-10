@@ -139,11 +139,11 @@
 									</div>
 									<div class="card rounded-0 border bg-transparent mb-0 shadow-none">
 										<div class="card-body">
-											<p class="mb-2">Subtotal: <span class="float-end">${{ cart_subtotal|floatformat:2 }}</span></p>
-											<p class="mb-2">Shipping: <span class="float-end">${{ shipping_charges.charge_amount|floatformat:2 }}</span></p>
-											<p class="mb-0">Coupon Discount: <span class="float-end">-${{ cart_coupon_discount|floatformat:2 }}</span></p>
+											<p class="mb-2">Subtotal: <span class="float-end" id="cart-subtotal">${{ cart_subtotal|floatformat:2 }}</span></p>
+											<p class="mb-2">Shipping: <span class="float-end" id="cart-shipping">${{ cart_shipping|floatformat:2 }}</span></p>
+											<p class="mb-0">Coupon Discount: <span class="float-end" id="cart-coupon">-${{ cart_coupon_discount|floatformat:2 }}</span></p>
 											<div class="my-3 border-top"></div>
-											<h5 class="mb-0">Order Total: <span class="float-end">${{ cart_order_total|floatformat:2 }}</span></h5>
+											<h5 class="mb-0">Order Total: <span class="float-end" id="cart-order-total">${{ cart_order_total|floatformat:2 }}</span></h5>
 											<div class="my-4"></div>
 											<div class="d-grid">
 												<form method="POST" action="{% url 'shopping-cart' %}" id="checkout-form">
@@ -153,10 +153,11 @@
 													<input type="hidden" name="district_id" id="district_id_field">
 													<input type="hidden" name="zip_code" id="zip_code_field">
 
-													<div class="d-grid">
-														<button type="submit" class="btn btn-dark btn-ecomm">
+													<div class="d-grid gap-2">
+														<button type="submit" class="btn btn-dark btn-ecomm" {% if not cart_items_base %}disabled{% endif %}>
 														Proceed to Checkout
 														</button>
+														<a href="{% url 'home' %}" class="btn btn-outline-dark btn-ecomm">Continue Shopping</a>
 													</div>
 												</form>
 											</div>
@@ -303,9 +304,17 @@ document.addEventListener('DOMContentLoaded', function () {
           const itemRow = input.closest('.row');
           const itemTotalEl = itemRow.querySelector('h5');
           if (itemTotalEl) itemTotalEl.textContent = `ItemTotal: $${data.item_total}`;
-          const cartSubtotalEl = document.querySelector('#cart-subtotal');
-          if(cartSubtotalEl) cartSubtotalEl.textContent = `$${data.cart_subtotal}`;
+          const sub = document.querySelector('#cart-subtotal');
+          const ship = document.querySelector('#cart-shipping');
+          const coup = document.querySelector('#cart-coupon');
+          const tot = document.querySelector('#cart-order-total');
+          if (sub) sub.textContent = `$${data.cart_subtotal}`;
+          if (ship && data.cart_shipping) ship.textContent = `$${data.cart_shipping}`;
+          if (coup && data.cart_coupon_discount != null) coup.textContent = `-$${data.cart_coupon_discount}`;
+          if (tot && data.cart_order_total) tot.textContent = `$${data.cart_order_total}`;
           document.querySelectorAll('.alert-count').forEach(el => el.textContent = data.cart_total_items);
+        } else if (data.message) {
+          alert(data.message);
         }
       });
     });

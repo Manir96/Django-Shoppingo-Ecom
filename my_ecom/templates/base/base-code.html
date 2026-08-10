@@ -19,11 +19,32 @@
 	<link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 	<link href="{% static 'assets/css/app.css' %}" rel="stylesheet">
+	<link href="{% static 'assets/css/product-cards.css' %}?v=3" rel="stylesheet">
+	<link href="{% static 'assets/css/account.css' %}?v=4" rel="stylesheet">
+	<link href="{% static 'assets/css/account-dashboard.css' %}?v=3" rel="stylesheet">
 	<link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet">
 	<link href="{% static 'assets/css/icons.css' %}" rel="stylesheet">
-	<title>Shopingo - eCommerce HTML Template</title>
-
-	
+	<link href="{% static 'assets/css/errors.css' %}?v=1" rel="stylesheet">
+	<title>{% block title %}Shopingo - eCommerce{% endblock %}</title>
+	<meta name="description" content="{% block meta_description %}Shopingo — shop electronics, fashion, beauty and more.{% endblock %}">
+	{% block robots %}{% endblock %}
+	{% block extra_head %}{% endblock %}
+	<style>
+		/* Guaranteed rounded product images (works even if static cache is stale) */
+		.product-grid .card .product-image,
+		.product-grid .card > .position-relative.overflow-hidden {
+			overflow: hidden !important;
+			border-radius: 12px !important;
+		}
+		.product-grid .card .product-image img,
+		.product-grid .card > .position-relative.overflow-hidden img,
+		.product-grid .card img.img-fluid,
+		.product-grid .card img.card-img-top {
+			border-radius: 12px !important;
+			object-fit: cover !important;
+			object-position: center !important;
+		}
+	</style>
 </head>
 
 <body>
@@ -103,10 +124,10 @@
 							</div>
 						</div>
 						<div class="col-12 col-xl order-4 order-xl-0">
-							<div class="input-group flex-nowrap pb-3 pb-xl-0">
-								<input type="text" class="form-control w-100 border-dark border border-3" placeholder="Search for Products">
-								<button class="btn btn-dark btn-ecomm border-3" type="button">Search</button>
-							</div>
+							<form action="{% url 'product-search' %}" method="get" class="input-group flex-nowrap pb-3 pb-xl-0" role="search">
+								<input type="search" name="q" class="form-control w-100 border-dark border border-3" placeholder="Search for Products" value="{{ request.GET.q|default:'' }}" aria-label="Search products">
+								<button class="btn btn-dark btn-ecomm border-3" type="submit">Search</button>
+							</form>
 						</div>
 						<div class="col-auto d-none d-xl-flex">
 							<div class="d-flex align-items-center gap-3">
@@ -200,42 +221,57 @@
 						  <li class="nav-item">
 							<a class="nav-link" href="{% url 'home' %}">Home</a>
 						  </li>
-						  <li class="nav-item dropdown">
-							<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="tv-shows.html"
-							  data-bs-toggle="dropdown">
-							  Categories
+						  <li class="nav-item dropdown shopingo-mega-dropdown">
+							<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="{% url 'shop-categories' %}"
+							  data-bs-toggle="dropdown" aria-expanded="false">
+							  <i class='bx bx-grid-alt me-1'></i> Categories
 							</a>
-							<div class="dropdown-menu dropdown-large-menu">
-							  <div class="row">
-								{% for category in categories %}
-								<div class="col-12 col-xl-4">
-									<!-- <h6 class="large-menu-title">{{ category.name }}</h6> -->
-									<h6 class="large-menu-title">
-										<a href="{% url 'produc_category_view' category.slug %}" class="text-dark text-decoration-none">
-											{{ category.name }}
-										</a>
-									</h6>
-									<ul class="list-unstyled">
-									{% for sub in category.subcategories.all %}
-										<li>
-										<a href="{% url 'produc_subCategory_view' sub.slug %}">
-											{{ sub.name }}
-										</a>
-										</li>
-									{% empty %}
-										<li><em>No subcategories available</em></li>
-									{% endfor %}
+							<div class="dropdown-menu shopingo-mega-menu border-0 shadow-lg">
+							  <div class="shopingo-mega-inner">
+								<div class="shopingo-mega-grid">
+								  {% for category in categories %}
+								  {% if category.is_active %}
+								  <div class="shopingo-mega-col">
+									<a href="{% url 'produc_category_view' category.slug %}" class="shopingo-mega-heading">
+									  {% if category.icon %}<i class='bx {{ category.icon }}'></i>{% else %}<i class='bx bx-category'></i>{% endif %}
+									  <span>{{ category.name }}</span>
+									</a>
+									<ul class="shopingo-mega-links list-unstyled mb-0">
+									  {% for sub in category.subcategories.all %}
+									  {% if sub.is_active %}
+									  <li>
+										<a href="{% url 'produc_subCategory_view' sub.slug %}">{{ sub.name }}</a>
+									  </li>
+									  {% endif %}
+									  {% empty %}
+									  <li><em class="text-muted">No subcategories</em></li>
+									  {% endfor %}
 									</ul>
-								</div>
-								{% endfor %}
-								<div class="col-12 col-xl-4 d-none d-xl-block">
-								  <div class="pramotion-banner1">
-									<img src="{% static 'assets/images/gallery/menu-img.jpg' %}" class="img-fluid" alt="" />
+									<a href="{% url 'produc_category_view' category.slug %}" class="shopingo-mega-viewall">View all →</a>
+								  </div>
+								  {% endif %}
+								  {% endfor %}
+								  <div class="shopingo-mega-promo d-none d-xl-flex">
+									{% with promo=categories|first %}
+									{% if promo and promo.banner %}
+									  <img src="{{ promo.banner.url }}" alt="{{ promo.promo_title|default:promo.name }}">
+									{% else %}
+									  <img src="{% static 'assets/images/gallery/menu-img.jpg' %}" alt="Shop deals">
+									{% endif %}
+									<div class="shopingo-mega-promo-copy">
+									  <p class="eyebrow">Featured</p>
+									  <h5>{{ promo.promo_title|default:"Season Sale" }}</h5>
+									  <p>{{ promo.promo_text|default:"Discover top deals across every category." }}</p>
+									  {% if promo and promo.slug %}
+									  <a href="{% url 'produc_category_view' promo.slug %}" class="btn btn-sm btn-dark">Shop now</a>
+									  {% else %}
+									  <a href="{% url 'shop-categories' %}" class="btn btn-sm btn-dark">Shop now</a>
+									  {% endif %}
+									</div>
+									{% endwith %}
 								  </div>
 								</div>
-								<!-- end col-3 -->
 							  </div>
-							  <!-- end row -->
 							</div>
 						  </li>
 						  <li class="nav-item"> <a class="nav-link" href="{% url 'shop-categories' %}">Our Store</a> 
@@ -245,20 +281,20 @@
 							  Account
 							</a>
 							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="{% url 'account-dashboard' %}">Dashboard</a>
-								</li>
-								<li><a class="dropdown-item" href="{% url 'account-downloads' %}">Downloads</a>
-								</li>
-								<li><a class="dropdown-item" href="{% url 'account-orders' %}">My Orders</a>
-								</li>
-								<li><a class="dropdown-item" href="{% url 'account-user-details' %}">User Details</a>
-								</li>
-								<li>
-									<hr class="dropdown-divider">
-								</li>
+								{% if request.user.is_authenticated %}
+								<li><a class="dropdown-item" href="{% url 'account-dashboard' %}">Dashboard</a></li>
+								<li><a class="dropdown-item" href="{% url 'account-orders' %}">My Orders</a></li>
+								<li><a class="dropdown-item" href="{% url 'account-downloads' %}">Downloads</a></li>
+								<li><a class="dropdown-item" href="{% url 'account-addresses' %}">Addresses</a></li>
+								<li><a class="dropdown-item" href="{% url 'account-payment-methods' %}">Payment Methods</a></li>
+								<li><a class="dropdown-item" href="{% url 'account-user-details' %}">Account Details</a></li>
+								<li><hr class="dropdown-divider"></li>
+								<li><a class="dropdown-item" href="{% url 'user_logout' %}">Logout</a></li>
+								{% else %}
 								<li><a class="dropdown-item" href="{% url 'customer_login' %}">Login</a></li>
 								<li><a class="dropdown-item" href="{% url 'customer_register' %}">Register</a></li>
-								<li><a class="dropdown-item" href="{% url 'reset-password' %}">Password</a></li>
+								<li><a class="dropdown-item" href="{% url 'forgot-password' %}">Forgot Password</a></li>
+								{% endif %}
 							</ul>
 						  </li>
 						  						  
@@ -314,11 +350,13 @@
 								<h5 class="mb-4 text-uppercase fw-bold">Categories</h5>
 								<ul class="list-unstyled">
 									{% for category in categories %}
+										{% if category.slug %}
 										<li class="mb-1">
 											<a href="{% url 'produc_category_view' category.slug %}" class="text-dark text-decoration-none">
 												<i class='bx bx-chevron-right'></i> {{ category.name }}
 											</a>
 										</li>
+										{% endif %}
 									{% empty %}
 										<li>No categories available</li>
 									{% endfor %}
@@ -329,10 +367,9 @@
 						<div class="col">
 							<div class="footer-section3">
 								<h5 class="mb-4 text-uppercase fw-bold">Popular Tags</h5>
-								<div class="tags-box d-flex flex-wrap gap-2">
-									<!-- <a href="" class="btn btn-ecomm btn-outline-dark">Cloths</a> -->
+								<div class="tags-box footer-tags-box d-flex flex-wrap gap-2">
 									{% for tag in tags %}
-                                        <a href="{% url 'produc_tag_view' tag.slug %}"  class="btn btn-ecomm btn-outline-dark">{{ tag.name }}</a>
+                                        <a href="{% url 'produc_tag_view' tag.slug %}" class="btn btn-ecomm btn-outline-dark btn-sm footer-tag-btn">{{ tag.name }}</a>
                                     {% endfor %}
 								</div>
 							</div>

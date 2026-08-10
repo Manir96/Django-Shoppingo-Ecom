@@ -29,18 +29,20 @@
 			<section class="py-4">
 				<div class="container">
 					<div class="product-grid">
-						<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+						<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-sm-4">
 							{% for item in wishlist_items %}
 							<div class="col">
-								<div class="card rounded-0 border">
-									<a href="{% url 'product-detail' item.product.slug %}">
-										{% if item.product.images.first %}
-											<img src="{{ item.product.images.first.image.url }}" class="card-img-top" alt="{{ item.product.title }}">
-										{% else %}
-											<img src="{% static 'assets/images/no-image.png' %}" class="card-img-top" alt="No image">
-										{% endif %}
-									</a>
-									<div class="card-body">
+								<div class="card">
+									<div class="product-image position-relative overflow-hidden">
+										<a href="{% url 'product-detail' item.product.slug %}">
+											{% if item.product.images.first %}
+												<img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}">
+											{% else %}
+												<img src="{% static 'assets/images/no-image.png' %}" alt="No image">
+											{% endif %}
+										</a>
+									</div>
+									<div class="card-body px-0">
 										<div class="product-info">
 											<a href="javascript:;">
 												<p class="product-catergory font-13 mb-1">
@@ -52,7 +54,7 @@
 												</p>
 											</a>
 											<a href="{% url 'product-detail' item.product.slug %}">
-												<h6 class="product-name mb-2">{{ item.product.title }}</h6>
+												<h6 class="product-name mb-2 product-short-title">{{ item.product.title }}</h6>
 											</a>
 											<div class="d-flex align-items-center">
 												<div class="mb-1 product-price">

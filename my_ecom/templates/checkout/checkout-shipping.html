@@ -85,13 +85,18 @@
 																data-fee="{{ method.charge_amount|floatformat:2 }}"
 																name="shipping_method"
 																value="{{ method.id }}"
+																{% if selected_shipping_id == method.id %}checked{% endif %}
 																required>
 														</td>
 														<td>{{ method.Shipping_type_name }}</td>
-														<td>{{ method.country }}</td>
-														<td>{{ method.division }}</td>
-														<td>{{ method.delivery_time|default:"--" }}</td>
+														<td>{{ method.country|default:"—" }}</td>
+														<td>{{ method.division|default:"—" }}</td>
+														<td>{{ method.delivery_time|default:method.estimated_days }} days</td>
 														<td>${{ method.charge_amount }}</td>
+													</tr>
+													{% empty %}
+													<tr>
+														<td colspan="6" class="text-center text-muted">No shipping methods available.</td>
 													</tr>
 													{% endfor %}
 												</tbody>
@@ -103,7 +108,7 @@
 												<div class="row">
 													<div class="col-md-6">
 														<div class="d-grid">
-															<a href="javascript:;" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Details</a>
+															<a href="{% url 'checkout-details' %}" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Details</a>
 														</div>
 													</div>
 													<div class="col-md-6">
@@ -151,26 +156,7 @@
 														<p class="fs-5">Order summary</p>
 														<div class="my-3 border-top"></div>
 
-														{% for cart_item in cart_items_base %}
-														<div class="d-flex align-items-center mb-2">
-															<a class="d-block flex-shrink-0" href="{% url 'product-detail' cart_item.item.product.slug %}">
-																<img src="{{ cart_item.item.product.images.first.image.url }}" width="75" alt="{{ cart_item.item.product.title }}">
-															</a>
-															<div class="ps-2 flex-grow-1">
-																<h6 class="mb-1">
-																	<a href="{% url 'product-detail' cart_item.item.product.slug %}" class="text-dark">
-																		{{ cart_item.item.product.title }}
-																	</a>
-																</h6>
-																<div class="widget-product-meta">
-																	<span class="me-2">${{ cart_item.item.product.orginal_price|floatformat:2 }}</span>
-																	<span>x {{ cart_item.item.quantity }} = ${{ cart_item.item_total|floatformat:2 }}</span>
-																</div>
-															</div>
-														</div>
-
-														<div class="my-3 border-top"></div>
-														{% endfor %}
+														{% include 'checkout/partials/order_summary_items.html' %}
 													</div>
 
 												</div>

@@ -1,4 +1,4 @@
-{% extends 'base/base-code.html' %}
+﻿{% extends 'base/base-code.html' %}
 {% load static %}
 {% block title %}Product Deatails{% endblock title %}
 {% block main-content %}
@@ -92,37 +92,47 @@
 											{% csrf_token %}
 											<input type="hidden" name="product_id" value="{{ product.id }}">
 
-											<div class="row row-cols-auto align-items-center mt-3">
+											<div class="row row-cols-auto align-items-center mt-3 g-3">
 
 												<!-- Quantity -->
 												<div class="col">
-													<label class="form-label">Quantity</label>
-													<select class="form-select form-select-sm" name="quantity">
+													<label class="form-label mb-1">Quantity</label>
+													{% if quantity_range %}
+													<select class="form-select form-select-sm" name="quantity" style="min-width: 90px;">
 														{% for i in quantity_range %}
 															<option value="{{ i }}">{{ i }}</option>
 														{% endfor %}
 													</select>
+													{% else %}
+													<select class="form-select form-select-sm" name="quantity" disabled style="min-width: 90px;">
+														<option value="">Out of stock</option>
+													</select>
+													<p class="text-danger small mb-0 mt-1">Currently unavailable</p>
+													{% endif %}
 												</div>
 
-												<!-- Size -->
+												<!-- Size (only when product has size variations) -->
+												{% if has_sizes %}
 												<div class="col">
-													<label class="form-label">Size</label>
-													<select class="form-select form-select-sm" name="size" id="sizeSelect">
+													<label class="form-label mb-1">Size</label>
+													<select class="form-select form-select-sm" name="size" id="sizeSelect" required style="min-width: 110px;">
+														<option value="">Select size</option>
 														{% for size in sizes %}
 															<option value="{{ size }}">{{ size }}</option>
-														{% empty %}
-															<option disabled>No sizes</option>
 														{% endfor %}
 													</select>
 												</div>
+												{% endif %}
 
-												<!-- Color -->
+												<!-- Color (only when product has color variations) -->
+												{% if has_colors %}
 												<div class="col">
-													<label class="form-label">Colors</label>
-													<div class="color-indigators d-flex align-items-center gap-2">
+													<label class="form-label mb-1">Colors</label>
+													<div class="color-indigators d-flex align-items-center gap-2 flex-wrap">
 														{% for color in colors %}
 															<div class="color-indigator-item"
 																data-color="{{ color.color__name }}"
+																title="{{ color.color__name }}"
 																style="
 																	width: 25px;
 																	height: 25px;
@@ -132,18 +142,17 @@
 																	border: 2px solid #ddd;
 																">
 															</div>
-														{% empty %}
-															<p class="text-muted small mb-0">No colors</p>
 														{% endfor %}
 													</div>
-													<!-- hidden input for selected color -->
-													<input type="hidden" name="color" id="selectedColorInput">
+													<input type="hidden" name="color" id="selectedColorInput" value="" required>
 												</div>
+												{% endif %}
 											</div>
 
 											<!-- Buttons -->
 											<div class="d-flex gap-2 mt-3">
-												<button type="submit" name="action" value="cart" class="btn btn-dark btn-ecomm">
+												<button type="submit" name="action" value="cart" class="btn btn-dark btn-ecomm"
+													{% if not quantity_range %}disabled{% endif %}>
 													<i class="bx bxs-cart-add"></i> Add to Cart
 												</button>
 												<button type="submit" name="action" value="wishlist" class="btn btn-light btn-ecomm">
@@ -152,25 +161,43 @@
 											</div>
 										</form>
 										<hr/>
+										{% with share_url=request.build_absolute_uri share_title=product.title %}
 										<div class="product-sharing">
+											<p class="mb-2 small text-muted">Share this product</p>
 											<div class="d-flex align-items-center gap-2 flex-wrap">
-												<div class="">
-													<button type="button" class="btn-social bg-twitter"><i class='bx bxl-twitter'></i></button>
-												</div>
-												<div class="">
-													<button type="button" class="btn-social bg-facebook"><i class='bx bxl-facebook'></i></button>
-												</div>
-												<div class="">
-													<button type="button" class="btn-social bg-linkedin"><i class='bx bxl-linkedin'></i></button>
-												</div>
-												<div class="">
-													<button type="button" class="btn-social bg-youtube"><i class='bx bxl-youtube'></i></button>
-												</div>
-												<div class="">
-													<button type="button" class="btn-social bg-pinterest"><i class='bx bxl-pinterest'></i></button>
-												</div>
-												</div>
+												<a class="btn-social bg-twitter"
+												   href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&amp;text={{ share_title|urlencode }}"
+												   target="_blank" rel="noopener noreferrer" title="Share on X / Twitter"
+												   aria-label="Share on X / Twitter">
+													<i class="bx bxl-twitter"></i>
+												</a>
+												<a class="btn-social bg-facebook"
+												   href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}"
+												   target="_blank" rel="noopener noreferrer" title="Share on Facebook"
+												   aria-label="Share on Facebook">
+													<i class="bx bxl-facebook"></i>
+												</a>
+												<a class="btn-social bg-linkedin"
+												   href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url|urlencode }}"
+												   target="_blank" rel="noopener noreferrer" title="Share on LinkedIn"
+												   aria-label="Share on LinkedIn">
+													<i class="bx bxl-linkedin"></i>
+												</a>
+												<a class="btn-social bg-whatsapp"
+												   href="https://api.whatsapp.com/send?text={{ share_title|urlencode }}%20{{ share_url|urlencode }}"
+												   target="_blank" rel="noopener noreferrer" title="Share on WhatsApp"
+												   aria-label="Share on WhatsApp">
+													<i class="bx bxl-whatsapp"></i>
+												</a>
+												<a class="btn-social bg-pinterest"
+												   href="https://pinterest.com/pin/create/button/?url={{ share_url|urlencode }}&amp;description={{ share_title|urlencode }}{% if product.images.first %}&amp;media={{ request.scheme }}://{{ request.get_host }}{{ product.images.first.image.url|urlencode }}{% endif %}"
+												   target="_blank" rel="noopener noreferrer" title="Share on Pinterest"
+												   aria-label="Share on Pinterest">
+													<i class="bx bxl-pinterest"></i>
+												</a>
+											</div>
 										</div>
+										{% endwith %}
 									</div>
 								</div>
 							</div>
@@ -185,147 +212,145 @@
 				<div class="container">
 					<div class="product-more-info">
 						<ul class="nav nav-tabs mb-0" role="tablist">
-							<li class="nav-item">
-								<a class="nav-link" data-bs-toggle="tab" href="#discription">
+							<li class="nav-item" role="presentation">
+								<a class="nav-link {% if not show_reviews_tab %}active{% endif %}"
+								   id="tab-description"
+								   data-bs-toggle="tab"
+								   data-bs-target="#discription"
+								   href="#discription"
+								   role="tab">
 									<div class="d-flex align-items-center">
 										<div class="tab-title text-uppercase fw-500">Description</div>
 									</div>
 								</a>
 							</li>
-							<li class="nav-item">
-								<a class="nav-link" data-bs-toggle="tab" href="#more-info">
+							<li class="nav-item" role="presentation">
+								<a class="nav-link"
+								   id="tab-more-info"
+								   data-bs-toggle="tab"
+								   data-bs-target="#more-info"
+								   href="#more-info"
+								   role="tab">
 									<div class="d-flex align-items-center">
 										<div class="tab-title text-uppercase fw-500">More Info</div>
 									</div>
 								</a>
 							</li>
-							<li class="nav-item">
-								<a class="nav-link" data-bs-toggle="tab" href="#tags">
+							<li class="nav-item" role="presentation">
+								<a class="nav-link"
+								   id="tab-tags"
+								   data-bs-toggle="tab"
+								   data-bs-target="#tags"
+								   href="#tags"
+								   role="tab">
 									<div class="d-flex align-items-center">
 										<div class="tab-title text-uppercase fw-500">Tags</div>
 									</div>
 								</a>
 							</li>
-							<li class="nav-item">
-								<a class="nav-link active" data-bs-toggle="tab" href="#reviews">
+							<li class="nav-item" role="presentation">
+								<a class="nav-link {% if show_reviews_tab %}active{% endif %}"
+								   id="tab-reviews"
+								   data-bs-toggle="tab"
+								   data-bs-target="#reviews"
+								   href="#reviews"
+								   role="tab">
 									<div class="d-flex align-items-center">
-										<div class="tab-title text-uppercase fw-500">(3) Reviews</div>
+										<div class="tab-title text-uppercase fw-500">({{ review_count }}) Reviews</div>
 									</div>
 								</a>
 							</li>
 						</ul>
 						<div class="tab-content pt-3">
-							<div class="tab-pane fade" id="discription">
+							<div class="tab-pane {% if not show_reviews_tab %}show active{% endif %}" id="discription" role="tabpanel">
 								{{ product.description_details|safe }}
 							</div>
-							<div class="tab-pane fade" id="more-info">
+							<div class="tab-pane" id="more-info" role="tabpanel">
 								<p>{{ product.more_information|safe }}</p>
 							</div>
-							<div class="tab-pane fade" id="tags">
+							<div class="tab-pane" id="tags" role="tabpanel">
 								<div class="tags-box d-flex flex-wrap gap-2">
 									{% for tag in tags %}
                                         <a href="{% url 'produc_tag_view' tag.slug %}"  class="btn btn-ecomm btn-outline-dark">{{ tag.name }}</a>
                                     {% endfor %}
 								</div>
 							</div>
-							<div class="tab-pane fade show active" id="reviews">
-								<div class="row">
-									<div class="col col-lg-8">
+							<div class="tab-pane {% if show_reviews_tab %}show active{% endif %}" id="reviews" role="tabpanel">
+								<div class="row g-4">
+									<div class="col-12 col-lg-8">
 										<div class="product-review">
-											<h5 class="mb-4">3 Reviews For The Product</h5>
+											<h5 class="mb-4">{{ review_count }} Review{{ review_count|pluralize }} For The Product</h5>
 											<div class="review-list">
-												<div class="d-flex align-items-start">
+												{% for review in reviews %}
+												<div class="d-flex align-items-start mb-3">
 													<div class="review-user">
-														<img src="{% static 'assets/images/avatars/avatar-1.png' %}" width="65" height="65" class="rounded-circle" alt="" />
+														<img src="{% static 'assets/images/avatars/avatar-1.png' %}" width="65" height="65" class="rounded-circle" alt="{{ review.name }}" />
 													</div>
-													<div class="review-content ms-3">
+													<div class="review-content ms-3 flex-grow-1">
 														<div class="rates cursor-pointer fs-6">
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
+															{% for i in "12345" %}
+																{% if forloop.counter <= review.rating %}
+																	<i class="bx bxs-star text-warning"></i>
+																{% else %}
+																	<i class="bx bx-star text-warning"></i>
+																{% endif %}
+															{% endfor %}
 														</div>
 														<div class="d-flex align-items-center mb-2">
-															<h6 class="mb-0">James Caviness</h6>
-															<p class="mb-0 ms-auto">February 16, 2021</p>
+															<h6 class="mb-0">{{ review.name }}</h6>
+															<p class="mb-0 ms-auto">{{ review.created_at|date:"F j, Y" }}</p>
 														</div>
-														<p>Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan</p>
+														<p class="mb-0">{{ review.comment }}</p>
 													</div>
 												</div>
-												<hr/>
-												<div class="d-flex align-items-start">
-													<div class="review-user">
-														<img src="{% static 'assets/images/avatars/avatar-2.png' %}" width="65" height="65" class="rounded-circle" alt="" />
-													</div>
-													<div class="review-content ms-3">
-														<div class="rates cursor-pointer fs-6">
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-														</div>
-														<div class="d-flex align-items-center mb-2">
-															<h6 class="mb-0">David Buckley</h6>
-															<p class="mb-0 ms-auto">February 22, 2021</p>
-														</div>
-														<p>Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan</p>
-													</div>
-												</div>
-												<hr/>
-												<div class="d-flex align-items-start">
-													<div class="review-user">
-														<img src="{% static 'assets/images/avatars/avatar-3.png' %}" width="65" height="65" class="rounded-circle" alt="" />
-													</div>
-													<div class="review-content ms-3">
-														<div class="rates cursor-pointer fs-6">
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-															<i class="bx bxs-star text-warning"></i>
-														</div>
-														<div class="d-flex align-items-center mb-2">
-															<h6 class="mb-0">Peter Costanzo</h6>
-															<p class="mb-0 ms-auto">February 26, 2021</p>
-														</div>
-														<p>Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan</p>
-													</div>
-												</div>
+												{% if not forloop.last %}<hr/>{% endif %}
+												{% empty %}
+												<p class="text-muted">No reviews yet. Be the first to review this product.</p>
+												{% endfor %}
 											</div>
 										</div>
 									</div>
-									<div class="col col-lg-4">
+									<div class="col-12 col-lg-4">
 										<div class="add-review border">
 											<div class="form-body p-3">
 												<h4 class="mb-4">Write a Review</h4>
-												<div class="mb-3">
-													<label class="form-label">Your Name</label>
-													<input type="text" class="form-control rounded-0">
-												</div>
-												<div class="mb-3">
-													<label class="form-label">Your Email</label>
-													<input type="text" class="form-control rounded-0">
-												</div>
-												<div class="mb-3">
-													<label class="form-label">Rating</label>
-													<select class="form-select rounded-0">
-														<option selected>Choose Rating</option>
-														<option value="1">1</option>
-														<option value="2">2</option>
-														<option value="3">3</option>
-														<option value="3">4</option>
-														<option value="3">5</option>
-													</select>
-												</div>
-												<div class="mb-3">
-													<label class="form-label">Example textarea</label>
-													<textarea class="form-control rounded-0" rows="3"></textarea>
-												</div>
-												<div class="d-grid">
-													<button type="button" class="btn btn-dark btn-ecomm">Submit a Review</button>
-												</div>
+												{% if messages %}
+													{% for message in messages %}
+														<div class="alert alert-{{ message.tags }} rounded-0 py-2">{{ message }}</div>
+													{% endfor %}
+												{% endif %}
+												<form method="post" action="{% url 'product-detail' product.slug %}?tab=reviews">
+													{% csrf_token %}
+													<input type="hidden" name="form_type" value="product_review">
+													<div class="mb-3">
+														<label class="form-label">Your Name</label>
+														<input type="text" name="name" class="form-control rounded-0" required
+															value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}">
+													</div>
+													<div class="mb-3">
+														<label class="form-label">Your Email</label>
+														<input type="email" name="email" class="form-control rounded-0" required
+															value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+													</div>
+													<div class="mb-3">
+														<label class="form-label">Rating</label>
+														<select name="rating" class="form-select rounded-0" required>
+															<option value="">Choose Rating</option>
+															<option value="5">5</option>
+															<option value="4">4</option>
+															<option value="3">3</option>
+															<option value="2">2</option>
+															<option value="1">1</option>
+														</select>
+													</div>
+													<div class="mb-3">
+														<label class="form-label">Your Review</label>
+														<textarea name="comment" class="form-control rounded-0" rows="3" required></textarea>
+													</div>
+													<div class="d-grid">
+														<button type="submit" class="btn btn-dark btn-ecomm">Submit a Review</button>
+													</div>
+												</form>
 											</div>
 										</div>
 									</div>
@@ -351,7 +376,7 @@
 							{% for item in similar_products %}
 							<div class="item">
 								<div class="card">
-									<div class="position-relative overflow-hidden">
+									<div class="product-image position-relative overflow-hidden">
 										<div class="add-cart position-absolute top-0 end-0 mt-3 me-3">
 											<a href="javascript:;"><i class='bx bx-cart-add'></i></a>
 										</div>
@@ -421,22 +446,44 @@ document.addEventListener('DOMContentLoaded', function () {
     const colorItems = document.querySelectorAll('.color-indigator-item');
     const colorInput = document.getElementById('selectedColorInput');
 
+    function selectColor(el) {
+        if (!el) return;
+        colorItems.forEach(c => {
+            c.style.border = '2px solid #ddd';
+            c.classList.remove('selected');
+        });
+        el.style.border = '3px solid #000';
+        el.classList.add('selected');
+        if (colorInput) colorInput.value = el.dataset.color || '';
+    }
+
     colorItems.forEach(item => {
         item.addEventListener('click', function () {
-            // Remove selected state from all colors
-            colorItems.forEach(c => {
-                c.style.border = '2px solid #ddd';
-                c.classList.remove('selected');
-            });
-
-            // Add selected border to clicked color
-            this.style.border = '3px solid #000';
-            this.classList.add('selected');
-
-            // Store selected color name
-            colorInput.value = this.dataset.color;
+            selectColor(this);
         });
     });
+    if (colorItems.length) selectColor(colorItems[0]);
+
+    // Force-open Reviews tab when ?tab=reviews (Bootstrap can leave pane blank)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'reviews') {
+        const reviewTab = document.querySelector('#tab-reviews');
+        if (reviewTab && window.bootstrap && bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance(reviewTab).show();
+        } else if (reviewTab) {
+            document.querySelectorAll('.product-more-info .tab-pane').forEach(p => {
+                p.classList.remove('show', 'active');
+            });
+            document.querySelectorAll('.product-more-info .nav-link').forEach(a => {
+                a.classList.remove('active');
+            });
+            reviewTab.classList.add('active');
+            const pane = document.querySelector('#reviews');
+            if (pane) pane.classList.add('show', 'active');
+        }
+        const pane = document.querySelector('#reviews');
+        if (pane) pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 });
 </script>
 	{% endblock main-content %}

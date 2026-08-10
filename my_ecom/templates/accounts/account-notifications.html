@@ -1,0 +1,45 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}Notifications{% endblock %}
+{% block main-content %}
+{% with page_title="Notifications" %}
+{% include 'accounts/partials/layout_start.html' %}
+
+<header class="dash-hero glass-card mb-3">
+	<div>
+		<p class="dash-greeting">Inbox</p>
+		<h1 style="font-size:1.5rem;margin:0;">Notifications</h1>
+		<p class="text-muted mb-0 small mt-1">{% if unread_notifications %}{{ unread_notifications }} unread{% else %}You're all caught up{% endif %}</p>
+	</div>
+	{% if notifications %}
+	<form method="post" action="{% url 'account-notifications' %}">
+		{% csrf_token %}
+		<input type="hidden" name="action" value="read_all">
+		<button class="btn dash-btn-ghost" type="submit">Mark all read</button>
+	</form>
+	{% endif %}
+</header>
+
+<section class="glass-card dash-panel">
+	{% for n in notifications %}
+	<article class="dash-notif {% if not n.is_read %}unread{% endif %}">
+		<span class="dash-notif-dot n-{{ n.ntype|default:'system' }}"></span>
+		<div class="flex-grow-1">
+			<strong>{{ n.title }}</strong>
+			{% if n.message %}<p>{{ n.message }}</p>{% endif %}
+			<small>{{ n.created_at|timesince }} ago</small>
+			{% if n.link %}<div class="mt-1"><a href="{{ n.link }}" class="small">Open</a></div>{% endif %}
+		</div>
+	</article>
+	{% empty %}
+	<div class="dash-empty">
+		<div class="dash-empty-illu"><i class="bx bx-bell-off"></i></div>
+		<h3>No notifications</h3>
+		<p>Order updates, promos, and alerts will appear here.</p>
+	</div>
+	{% endfor %}
+</section>
+
+{% include 'accounts/partials/layout_end.html' %}
+{% endwith %}
+{% endblock %}

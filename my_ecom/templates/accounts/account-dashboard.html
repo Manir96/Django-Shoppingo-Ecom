@@ -1,72 +1,312 @@
 {% extends 'base/base-code.html' %}
 {% load static %}
-{% block title %}Account Dashboard{% endblock title %}
+{% block title %}Account Dashboard{% endblock %}
 {% block main-content %}
-	<!--start page wrapper -->
-	<div class="page-wrapper">
-		<div class="page-content">
-			<!--start breadcrumb-->
-			<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
-				<div class="container">
-					<div class="page-breadcrumb d-flex align-items-center">
-						<h3 class="breadcrumb-title pe-3">My Orders</h3>
-						<div class="ms-auto">
-							<nav aria-label="breadcrumb">
-								<ol class="breadcrumb mb-0 p-0">
-									<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
-									</li>
-									<li class="breadcrumb-item"><a href="javascript:;">Account</a>
-									</li>
-									<li class="breadcrumb-item active" aria-current="page">My Orders</li>
-								</ol>
-							</nav>
-						</div>
-					</div>
-				</div>
-			</section>
-			<!--end breadcrumb-->
-			<!--start shop cart-->
-			<section class="py-4">
-				<div class="container">
-					<h3 class="d-none">Account</h3>
-					<div class="card">
-						<div class="card-body">
-							<div class="row">
-								<div class="col-lg-4">
-									<div class="card shadow-none mb-3 mb-lg-0 border rounded-0">
-										<div class="card-body">
-											<div class="list-group list-group-flush">	
-												<a href="{% url 'account-dashboard' %}" class="list-group-item active d-flex justify-content-between align-items-center">Dashboard <i class='bx bx-tachometer fs-5'></i></a>
-												<a href="{% url 'account-orders' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Orders <i class='bx bx-cart-alt fs-5'></i></a>
-												<a href="{% url 'account-downloads' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Downloads <i class='bx bx-download fs-5'></i></a>
-												<a href="{% url 'account-addresses' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Addresses <i class='bx bx-home-smile fs-5'></i></a>
-												<a href="{% url 'account-payment-methods' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Payment Methods <i class='bx bx-credit-card fs-5'></i></a>
-												<a href="{% url 'account-user-details' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Account Details <i class='bx bx-user-circle fs-5'></i></a>
-												<a href="{% url 'user_logout' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Logout <i class='bx bx-log-out fs-5'></i></a>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="col-lg-8">
-									<div class="card shadow-none mb-0">
-										<div class="card-body">
-											<p>
-												Hello <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> 
-												(not <strong>{{ request.user.get_full_name|default:request.user.username }}?</strong>  
-												<a href="{% url 'user_logout' %}">Logout</a>)
-											</p>
-											<p>From your account dashboard you can view your Recent Orders, manage your shipping and billing addesses and edit your password and account details</p>
-										</div>
-									</div>
-								</div>
-							</div>
-							<!--end row-->
-						</div>
-					</div>
-				</div>
-			</section>
-			<!--end shop cart-->
+{% with page_title="Dashboard" %}
+{% include 'accounts/partials/layout_start.html' %}
+
+<!-- Welcome header -->
+<header class="dash-hero glass-card fade-up">
+	<div class="dash-hero-text">
+		<p class="dash-greeting">{{ greeting }}</p>
+		<h1>Welcome back, {{ request.user.get_short_name }}</h1>
+		<p class="dash-hero-meta">
+			<span><i class="bx bx-calendar"></i> {{ today|date:"l, F j, Y" }}</span>
+			<span><i class="bx bx-shield-quarter"></i> {{ stats.membership }} Member</span>
+			<span><i class="bx bx-time-five"></i> Member since {{ member_since|date:"M Y"|default:"—" }}</span>
+			{% if last_login %}<span><i class="bx bx-log-in"></i> Last login {{ last_login|timesince }} ago</span>{% endif %}
+		</p>
+		<div class="dash-completion">
+			<div class="d-flex justify-content-between small mb-1">
+				<span>Profile completion</span>
+				<strong>{{ profile_pct }}%</strong>
+			</div>
+			<div class="dash-progress dash-progress-lg">
+				<span style="width: {{ profile_pct }}%"></span>
+			</div>
 		</div>
 	</div>
-	<!--end page wrapper -->
-{% endblock main-content %}
+	<div class="dash-hero-actions">
+		<a href="{% url 'account-user-details' %}" class="btn dash-btn-primary">Edit Profile</a>
+		<a href="{% url 'home' %}" class="btn dash-btn-ghost">Continue Shopping</a>
+	</div>
+</header>
+
+<!-- Stat cards -->
+<div class="dash-stats">
+	<div class="dash-stat fade-up" style="--delay:0.05s">
+		<div class="dash-stat-icon bg-soft-blue"><i class="bx bx-cart-alt"></i></div>
+		<div>
+			<div class="dash-stat-num" data-count="{{ stats.total_orders }}">{{ stats.total_orders }}</div>
+			<div class="dash-stat-label">Total Orders</div>
+		</div>
+		<span class="dash-trend up">Live</span>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.1s">
+		<div class="dash-stat-icon bg-soft-amber"><i class="bx bx-time"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.pending_orders }}</div>
+			<div class="dash-stat-label">Pending Orders</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.15s">
+		<div class="dash-stat-icon bg-soft-indigo"><i class="bx bx-loader-circle"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.processing_orders }}</div>
+			<div class="dash-stat-label">Processing</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.2s">
+		<div class="dash-stat-icon bg-soft-green"><i class="bx bx-check-circle"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.delivered_orders }}</div>
+			<div class="dash-stat-label">Delivered</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.25s">
+		<div class="dash-stat-icon bg-soft-rose"><i class="bx bx-heart"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.wishlist_count }}</div>
+			<div class="dash-stat-label">Wishlist</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.3s">
+		<div class="dash-stat-icon bg-soft-teal"><i class="bx bx-shopping-bag"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.cart_count }}</div>
+			<div class="dash-stat-label">Cart Items</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.35s">
+		<div class="dash-stat-icon bg-soft-gold"><i class="bx bx-dollar"></i></div>
+		<div>
+			<div class="dash-stat-num">${{ stats.total_spending|floatformat:0 }}</div>
+			<div class="dash-stat-label">Total Spending</div>
+		</div>
+	</div>
+	<div class="dash-stat fade-up" style="--delay:0.4s">
+		<div class="dash-stat-icon bg-soft-purple"><i class="bx bx-gift"></i></div>
+		<div>
+			<div class="dash-stat-num">{{ stats.reward_points }}</div>
+			<div class="dash-stat-label">Reward Points</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quick actions -->
+<div class="dash-quick fade-up" style="--delay:0.2s">
+	<a href="{% url 'home' %}" class="dash-quick-card"><i class="bx bx-store"></i><span>Continue Shopping</span></a>
+	<a href="{% url 'order-tracking' %}" class="dash-quick-card"><i class="bx bx-map"></i><span>Track Order</span></a>
+	<a href="{% url 'account-orders' %}" class="dash-quick-card"><i class="bx bx-file"></i><span>Download Invoice</span></a>
+	<a href="{% url 'account-addresses' %}" class="dash-quick-card"><i class="bx bx-home-smile"></i><span>Manage Address</span></a>
+	<a href="{% url 'account-payment-methods' %}" class="dash-quick-card"><i class="bx bx-credit-card-front"></i><span>Payment Methods</span></a>
+	<a href="{% url 'account-support' %}" class="dash-quick-card"><i class="bx bx-support"></i><span>Support Center</span></a>
+</div>
+
+<div class="row g-4 mt-1">
+	<!-- Recent orders table -->
+	<div class="col-xl-8">
+		<section class="glass-card dash-panel fade-up">
+			<div class="dash-panel-head">
+				<h2>Recent Orders</h2>
+				<a href="{% url 'account-orders' %}">View all</a>
+			</div>
+			{% if recent_orders %}
+			<div class="table-responsive">
+				<table class="dash-table">
+					<thead>
+						<tr>
+							<th>Order</th>
+							<th>Date</th>
+							<th>Products</th>
+							<th>Amount</th>
+							<th>Payment</th>
+							<th>Status</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for co in recent_orders %}
+						<tr>
+							<td><a href="{% url 'account-order-detail' co.id %}" class="fw-semibold">#{{ co.order.id }}</a></td>
+							<td class="text-muted small">{{ co.completed_at|date:"M d, Y" }}</td>
+							<td>
+								<div class="dash-prod-stack">
+									{% for item in co.order_items.all %}
+										{% if forloop.counter <= 3 and item.product.images.first %}
+										<img src="{{ item.product.images.first.image.url }}" alt="" loading="lazy" width="32" height="32">
+										{% endif %}
+									{% endfor %}
+								</div>
+							</td>
+							<td class="fw-semibold">${{ co.total_amount|floatformat:2 }}</td>
+							<td class="small">
+								{% if co.order.payment %}
+								<span class="status-badge {% if co.order.payment.status == 'completed' or co.order.payment.status == 'authorized' %}delivered{% else %}pending{% endif %}">
+									{{ co.order.payment.get_status_display }}
+								</span>
+								{% else %}—{% endif %}
+							</td>
+							<td>
+								<span class="status-badge {{ co.order.order_status.status|default:'confirmed' }}">
+									{{ co.order.order_status.get_status_display|default:"Confirmed" }}
+								</span>
+							</td>
+							<td class="text-nowrap">
+								<a href="{% url 'account-order-detail' co.id %}" class="btn btn-sm dash-btn-ghost">View</a>
+								{% if co.order.invoice %}
+								<a href="{% url 'invoice-detail' co.order.invoice.invoice_number %}" class="btn btn-sm dash-btn-ghost" target="_blank">Invoice</a>
+								{% endif %}
+								<a href="{% url 'order-tracking' %}?tracking_id={{ co.tracking_id }}" class="btn btn-sm dash-btn-ghost">Track</a>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			{% else %}
+			<div class="dash-empty">
+				<div class="dash-empty-illu"><i class="bx bx-package"></i></div>
+				<h3>No orders yet</h3>
+				<p>When you place an order, it will show up here.</p>
+				<a href="{% url 'home' %}" class="btn dash-btn-primary">Continue Shopping</a>
+			</div>
+			{% endif %}
+		</section>
+	</div>
+
+	<!-- Notifications + Profile -->
+	<div class="col-xl-4">
+		<section class="glass-card dash-panel fade-up mb-4">
+			<div class="dash-panel-head">
+				<h2>Notifications {% if unread_notifications %}<span class="dash-pill">{{ unread_notifications }}</span>{% endif %}</h2>
+				<a href="{% url 'account-notifications' %}">See all</a>
+			</div>
+			{% for n in notifications %}
+			<article class="dash-notif {% if not n.is_read %}unread{% endif %}">
+				<span class="dash-notif-dot n-{{ n.ntype|default:'system' }}"></span>
+				<div>
+					<strong>{{ n.title }}</strong>
+					{% if n.message %}<p>{{ n.message|truncatechars:70 }}</p>{% endif %}
+					<small>{{ n.created_at|timesince }} ago</small>
+				</div>
+			</article>
+			{% empty %}
+			<div class="dash-empty py-4">
+				<div class="dash-empty-illu sm"><i class="bx bx-bell"></i></div>
+				<p class="mb-0">You’re all caught up.</p>
+			</div>
+			{% endfor %}
+		</section>
+
+		<section class="glass-card dash-panel dash-profile-card fade-up">
+			<div class="d-flex gap-3 align-items-center mb-3">
+				{% if avatar_url %}
+				<img src="{{ avatar_url }}" class="dash-avatar lg" alt="" loading="lazy">
+				{% else %}
+				<span class="dash-avatar lg dash-avatar-fallback">{{ request.user.get_short_name|slice:":1"|upper }}</span>
+				{% endif %}
+				<div>
+					<strong>{{ request.user.get_full_name }}</strong>
+					<div class="small text-muted">{{ request.user.email }}</div>
+					{% if request.user.phone %}<div class="small text-muted">{{ request.user.phone }}</div>{% endif %}
+				</div>
+			</div>
+			{% if default_address %}
+			<p class="small text-muted mb-3">
+				<i class="bx bx-map"></i>
+				{{ default_address.address1 }}, {{ default_address.district }}
+			</p>
+			{% endif %}
+			<div class="d-flex flex-wrap gap-2">
+				<a href="{% url 'account-user-details' %}" class="btn btn-sm dash-btn-primary">Edit Profile</a>
+				<a href="{% url 'account-user-details' %}#password" class="btn btn-sm dash-btn-ghost">Change Password</a>
+			</div>
+		</section>
+	</div>
+</div>
+
+<!-- Recently viewed -->
+<section class="glass-card dash-panel fade-up mt-4">
+	<div class="dash-panel-head">
+		<h2>Recently Viewed</h2>
+	</div>
+	{% if recent_views %}
+	<div class="dash-product-grid">
+		{% for rv in recent_views %}
+		<article class="dash-product-card">
+			<a href="{% url 'product-detail' rv.product.slug %}" class="dash-product-img">
+				{% if rv.product.images.first %}
+				<img src="{{ rv.product.images.first.image.url }}" alt="{{ rv.product.title }}" loading="lazy">
+				{% endif %}
+			</a>
+			<div class="dash-product-body">
+				<a href="{% url 'product-detail' rv.product.slug %}" class="dash-product-title">{{ rv.product.title }}</a>
+				<div class="dash-product-price">${{ rv.product.orginal_price|default:rv.product.price|floatformat:2 }}</div>
+				<div class="dash-product-rating"><i class="bx bxs-star"></i> {{ rv.product.rating }}</div>
+				<div class="dash-product-actions">
+					<form method="post" action="{% url 'handle_product_action' %}">
+						{% csrf_token %}
+						<input type="hidden" name="product_id" value="{{ rv.product.id }}">
+						<input type="hidden" name="quantity" value="1">
+						<button type="submit" name="action" value="cart" class="btn btn-sm dash-btn-primary">Add to Cart</button>
+					</form>
+					<form method="post" action="{% url 'handle_product_action' %}">
+						{% csrf_token %}
+						<input type="hidden" name="product_id" value="{{ rv.product.id }}">
+						<button type="submit" name="action" value="wishlist" class="btn btn-sm dash-btn-ghost" title="Wishlist"><i class="bx bx-heart"></i></button>
+					</form>
+					<a href="{% url 'quick-view-product' rv.product.slug %}" class="btn btn-sm dash-btn-ghost" title="Quick view"><i class="bx bx-show"></i></a>
+				</div>
+			</div>
+		</article>
+		{% endfor %}
+	</div>
+	{% else %}
+	<div class="dash-empty py-4">
+		<p class="mb-0">Browse the store — products you view will appear here.</p>
+	</div>
+	{% endif %}
+</section>
+
+<!-- Recommended -->
+{% if recommended %}
+<section class="glass-card dash-panel fade-up mt-4">
+	<div class="dash-panel-head">
+		<h2>Recommended for you</h2>
+		<a href="{% url 'home' %}">Shop more</a>
+	</div>
+	<div class="dash-slider" id="recoSlider">
+		{% for p in recommended %}
+		<article class="dash-product-card dash-slide">
+			<a href="{% url 'product-detail' p.slug %}" class="dash-product-img">
+				{% if p.images.first %}
+				<img src="{{ p.images.first.image.url }}" alt="{{ p.title }}" loading="lazy">
+				{% endif %}
+				{% if p.discount_price %}
+				<span class="dash-disc">Save ${{ p.discount_price|floatformat:0 }}</span>
+				{% endif %}
+			</a>
+			<div class="dash-product-body">
+				<a href="{% url 'product-detail' p.slug %}" class="dash-product-title">{{ p.title }}</a>
+				<div class="dash-product-price">
+					${{ p.orginal_price|default:p.price|floatformat:2 }}
+					{% if p.discount_price %}<s class="text-muted ms-1">${{ p.price|floatformat:2 }}</s>{% endif %}
+				</div>
+				<div class="dash-product-rating"><i class="bx bxs-star"></i> {{ p.rating }}</div>
+				<form method="post" action="{% url 'handle_product_action' %}" class="mt-2">
+					{% csrf_token %}
+					<input type="hidden" name="product_id" value="{{ p.id }}">
+					<input type="hidden" name="quantity" value="1">
+					<button type="submit" name="action" value="cart" class="btn btn-sm dash-btn-primary w-100">Quick Add</button>
+				</form>
+			</div>
+		</article>
+		{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+{% include 'accounts/partials/layout_end.html' %}
+{% endwith %}
+{% endblock %}

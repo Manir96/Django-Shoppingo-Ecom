@@ -1,0 +1,76 @@
+{% if error.illustration == "not-found" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FEF3C7"/>
+	<rect x="48" y="62" width="104" height="76" rx="14" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M70 95h60M70 112h40" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
+	<circle cx="132" cy="132" r="28" fill="#F59E0B" stroke="#0F172A" stroke-width="4"/>
+	<path d="M122 142l28-28M150 142L122 114" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "server" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FEE2E2"/>
+	<rect x="46" y="56" width="108" height="36" rx="10" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<rect x="46" y="100" width="108" height="36" rx="10" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<circle cx="68" cy="74" r="6" fill="#EF4444"/><circle cx="86" cy="74" r="6" fill="#F59E0B"/>
+	<circle cx="68" cy="118" r="6" fill="#22C55E"/><circle cx="86" cy="118" r="6" fill="#94A3B8"/>
+	<path d="M118 74h24M118 118h24" stroke="#CBD5E1" stroke-width="5" stroke-linecap="round"/>
+	<path d="M100 148v18M88 166h24" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "forbidden" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FFEDD5"/>
+	<rect x="62" y="88" width="76" height="58" rx="12" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M78 88v-14a22 22 0 0144 0v14" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+	<circle cx="100" cy="116" r="8" fill="#F59E0B"/>
+	<path d="M100 124v12" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "unauthorized" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#DBEAFE"/>
+	<circle cx="100" cy="78" r="26" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M58 148c8-24 24-36 42-36s34 12 42 36" fill="#fff" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+	<rect x="118" y="108" width="40" height="28" rx="8" fill="#2563EB" stroke="#0F172A" stroke-width="3"/>
+	<path d="M128 108v-6a10 10 0 0120 0v6" stroke="#0F172A" stroke-width="3"/>
+</svg>
+{% elif error.illustration == "maintenance" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#E0E7FF"/>
+	<path d="M70 120l20-48h20l20 48H70z" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M100 72v20M88 110h24" stroke="#6366F1" stroke-width="5" stroke-linecap="round"/>
+	<circle cx="140" cy="140" r="22" fill="#F59E0B" stroke="#0F172A" stroke-width="3"/>
+	<path d="M140 130v12M140 148v2" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "rate-limit" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FEF3C7"/>
+	<circle cx="100" cy="100" r="46" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M100 70v30l22 14" stroke="#F59E0B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M100 48v10M100 142v10M48 100h10M142 100h10" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "timeout" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FCE7F3"/>
+	<circle cx="100" cy="104" r="44" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M100 78v28l18 10" stroke="#DB2777" stroke-width="5" stroke-linecap="round"/>
+	<path d="M82 52h36" stroke="#0F172A" stroke-width="5" stroke-linecap="round"/>
+</svg>
+{% elif error.illustration == "gateway" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#E0F2FE"/>
+	<path d="M40 110h40l12-28 16 56 14-36 10 16h28" stroke="#0F172A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+	<circle cx="148" cy="118" r="10" fill="#EF4444" stroke="#0F172A" stroke-width="3"/>
+</svg>
+{% elif error.illustration == "method" %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#F1F5F9"/>
+	<rect x="52" y="70" width="96" height="60" rx="12" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M68 92h64M68 110h40" stroke="#94A3B8" stroke-width="5" stroke-linecap="round"/>
+	<path d="M128 128l24 24M152 128l-24 24" stroke="#EF4444" stroke-width="5" stroke-linecap="round"/>
+</svg>
+{% else %}
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<circle cx="100" cy="100" r="88" fill="#FEE2E2"/>
+	<circle cx="100" cy="100" r="40" fill="#fff" stroke="#0F172A" stroke-width="4"/>
+	<path d="M100 80v28M100 122v4" stroke="#EF4444" stroke-width="6" stroke-linecap="round"/>
+</svg>
+{% endif %}

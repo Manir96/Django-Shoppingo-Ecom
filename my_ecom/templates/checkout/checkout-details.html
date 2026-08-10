@@ -86,27 +86,32 @@
 											<div class="border p-3">
 												<h2 class="h5 mb-0">Shipping Address</h2>
 												<div class="my-3 border-bottom"></div>
-												<form method="POST" action="{% url 'checkout-details' %}" class="row g-3">
+												<form method="POST" action="{% url 'checkout-details' %}" class="row g-3" novalidate>
 													{% csrf_token %}
 													<div class="col-md-6">
-														<label class="form-label">First Name</label>
-														<input type="text" class="form-control rounded-0" name="first_name" value="{{ request.user.first_name }}">
+														<label class="form-label">First Name <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="first_name" required
+															value="{{ shipping_info.first_name|default:request.user.first_name }}">
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">Last Name</label>
-														<input type="text" class="form-control rounded-0" name="last_name" value="{{ request.user.last_name }}">
+														<label class="form-label">Last Name <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="last_name" required
+															value="{{ shipping_info.last_name|default:request.user.last_name }}">
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">E-mail</label>
-														<input type="email" class="form-control rounded-0" name="email" value="{{ request.user.email }}">
+														<label class="form-label">E-mail <span class="text-danger">*</span></label>
+														<input type="email" class="form-control rounded-0" name="email" required
+															value="{{ shipping_info.email|default:request.user.email }}">
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">Phone Number</label>
-														<input type="text" class="form-control rounded-0" name="phone">
+														<label class="form-label">Phone Number <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="phone" required
+															placeholder="+8801XXXXXXXXX"
+															value="{{ shipping_info.phone|default:'' }}">
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">Country</label>
-														<select class="form-select rounded-0" name="country_id">
+														<label class="form-label">Country <span class="text-danger">*</span></label>
+														<select class="form-select rounded-0" name="country_id" required>
 															<option value="">-- Select Country --</option>
 															{% for country in country_name %}
 																<option value="{{ country.id }}" {% if shipping_info.country_id == country.id|stringformat:"s" %}selected{% endif %}>{{ country.nameName }}</option>
@@ -114,31 +119,34 @@
 														</select>
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">Division</label>
-														<input type="text" class="form-control rounded-0" name="division_id"
-															value="{{ division_display|default_if_none:'' }}">
+														<label class="form-label">Division / State <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="division_id" required
+															placeholder="e.g. Dhaka"
+															value="{{ shipping_info.division_id|default:division_display }}">
 													</div>
 
 													<div class="col-md-6">
-														<label class="form-label">District</label>
-														<input type="text" class="form-control rounded-0" name="district_id"
-															value="{{ district_display|default_if_none:'' }}">
+														<label class="form-label">City / District <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="district_id" required
+															placeholder="e.g. Gulshan"
+															value="{{ shipping_info.district_id|default:district_display }}">
 													</div>
 
 													<div class="col-md-6">
-														<label class="form-label">Zip/Postal Code</label>
-														<input type="text" class="form-control rounded-0" name="zip_code" value="{{ shipping_info.zip_code }}">
+														<label class="form-label">Zip/Postal Code <span class="text-danger">*</span></label>
+														<input type="text" class="form-control rounded-0" name="zip_code" required
+															value="{{ shipping_info.zip_code|default:'' }}">
 													</div>
 													<div class="col-md-6">
-														<label class="form-label">Address 1 (Shipping)</label>
-														<textarea class="form-control rounded-0" id="address1" name="address1"
-															placeholder="Enter your shipping address"></textarea>
+														<label class="form-label">Address 1 (Shipping) <span class="text-danger">*</span></label>
+														<textarea class="form-control rounded-0" id="address1" name="address1" required
+															placeholder="Enter your shipping address">{{ shipping_info.address1|default:'' }}</textarea>
 													</div>
 
 													<div class="col-md-6">
 														<label class="form-label">Address 2 (Billing)</label>
 														<textarea class="form-control rounded-0" id="address2" name="address2"
-															placeholder="Enter your billing address"></textarea>
+															placeholder="Enter your billing address">{{ shipping_info.address2|default:'' }}</textarea>
 													</div>
 
 													<div class="col-md-12">
@@ -207,26 +215,9 @@
 
 											<!-- Order Summary List -->
 											<div class="card rounded-0 border bg-transparent shadow-none">
-												{% for cart_item in cart_items_base %}
-												<div class="d-flex align-items-center mb-2">
-													<a class="d-block flex-shrink-0" href="{% url 'product-detail' cart_item.item.product.slug %}">
-														<img src="{{ cart_item.item.product.images.first.image.url }}" width="75" alt="{{ cart_item.item.product.title }}">
-													</a>
-													<div class="ps-2 flex-grow-1">
-														<h6 class="mb-1">
-															<a href="{% url 'product-detail' cart_item.item.product.slug %}" class="text-dark">
-																{{ cart_item.item.product.title }}
-															</a>
-														</h6>
-														<div class="widget-product-meta">
-															<span class="me-2">${{ cart_item.item.product.orginal_price|floatformat:2 }}</span>
-															<span>x {{ cart_item.item.quantity }} = ${{ cart_item.item_total|floatformat:2 }}</span>
-														</div>
-													</div>
+												<div class="card-body">
+													{% include 'checkout/partials/order_summary_items.html' %}
 												</div>
-												{% endfor %}
-
-
 											</div>
 
 											<!-- Totals -->

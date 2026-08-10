@@ -1,0 +1,57 @@
+/* Uniform product images â€” always load after app.css */
+.product-grid .card .product-image,
+.product-grid .card > .position-relative.overflow-hidden {
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  background-color: #f3f4f6;
+}
+
+.product-grid .card .product-image a,
+.product-grid .card > .position-relative.overflow-hidden > a {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.product-grid .card .product-image img,
+.product-grid .card > .position-relative.overflow-hidden img,
+.product-grid .card img.img-fluid,
+.product-grid .card img.card-img-top {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 12px !important;
+  display: block !important;
+  transition: transform 0.3s ease !important;
+}
+
+.product-grid .card:hover .product-image img,
+.product-grid .card:hover > .position-relative.overflow-hidden img {
+  transform: scale(1.05) !important;
+}
+
+.image-zoom-section .product-gallery .item,
+.image-zoom-section .product-gallery .item img {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.product-grid.d-flex .card .col-md-4,
+.product-grid.d-flex .card .col-md-4 img {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+/* Product detail tabs — prevent blank review pane */
+.product-more-info .tab-content > .tab-pane.show.active {
+  display: block !important;
+  opacity: 1 !important;
+}
+.product-more-info #reviews.show.active {
+  min-height: 200px;
+}

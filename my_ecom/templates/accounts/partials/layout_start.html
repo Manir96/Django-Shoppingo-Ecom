@@ -1,0 +1,33 @@
+{% load static %}
+{% include 'accounts/partials/critical_css.html' %}
+<div class="page-wrapper">
+	<div class="page-content">
+		<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
+			<div class="container">
+				<div class="page-breadcrumb d-flex align-items-center">
+					<h3 class="breadcrumb-title pe-3">{{ page_title|default:"My Account" }}</h3>
+					<div class="ms-auto">
+						<nav aria-label="breadcrumb">
+							<ol class="breadcrumb mb-0 p-0">
+								<li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="bx bx-home-alt"></i> Home</a></li>
+								<li class="breadcrumb-item"><a href="{% url 'account-dashboard' %}">Account</a></li>
+								<li class="breadcrumb-item active" aria-current="page">{{ page_title|default:"Dashboard" }}</li>
+							</ol>
+						</nav>
+					</div>
+				</div>
+			</div>
+		</section>
+		{# Always use premium shell so layout never falls back to broken card layout #}
+		<section class="py-4 account-section account-premium">
+			<div class="container">
+				{% if messages %}
+				{% for message in messages %}
+				<div class="alert alert-{{ message.tags|default:'info' }} rounded-3 mb-3">{{ message }}</div>
+				{% endfor %}
+				{% endif %}
+				<div class="dash-layout">
+					<div class="dash-layout-side">
+						{% include 'accounts/partials/sidebar.html' %}
+					</div>
+					<div class="dash-layout-main">

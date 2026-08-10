@@ -1,0 +1,48 @@
+{% extends 'base/base-code.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block main-content %}
+<section class="py-4 error-page" style="min-height:auto;">
+	<div class="container">
+		<nav aria-label="breadcrumb" class="mb-3">
+			<ol class="breadcrumb mb-0 small">
+				<li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+				<li class="breadcrumb-item active" aria-current="page">Search</li>
+			</ol>
+		</nav>
+		<div class="error-shell" style="max-width:1100px;">
+			<h1 class="h4 mb-3">{% if q %}Results for “{{ q }}”{% else %}Search products{% endif %}</h1>
+			<form action="{% url 'product-search' %}" method="get" class="error-search mb-4" role="search">
+				<div class="input-group">
+					<input type="search" name="q" class="form-control" value="{{ q }}" placeholder="Search products..." aria-label="Search products">
+					<button class="btn" type="submit">Search</button>
+				</div>
+			</form>
+			{% if products %}
+			<div class="error-prod-grid">
+				{% for product in products %}
+				<a class="error-prod" href="{% url 'product-detail' product.slug %}">
+					<div class="error-prod-img">
+						{% with img=product.images.first %}
+						{% if img %}
+						<img src="{{ img.image.url }}" alt="{{ product.title }}" loading="lazy" width="200" height="200">
+						{% else %}
+						<img src="{% static 'assets/images/logo-icon.png' %}" alt="" loading="lazy" width="200" height="200">
+						{% endif %}
+						{% endwith %}
+					</div>
+					<div class="error-prod-body">
+						<div class="error-prod-title">{{ product.title }}</div>
+						<div class="error-prod-price">${{ product.orginal_price|default:product.price|floatformat:2 }}</div>
+					</div>
+				</a>
+				{% endfor %}
+			</div>
+			{% else %}
+			<p class="text-muted mb-3">{% if q %}No products matched your search.{% else %}Type a product name to search.{% endif %}</p>
+			<a href="{% url 'shop-categories' %}" class="error-btn error-btn-primary">Continue Shopping</a>
+			{% endif %}
+		</div>
+	</div>
+</section>
+{% endblock %}

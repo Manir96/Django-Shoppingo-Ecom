@@ -1,0 +1,111 @@
+<style id="account-critical-css">
+/* Bulletproof account layout — works even if external CSS fails */
+.account-premium { background: #f1f5f9 !important; min-height: 60vh; }
+.account-premium .dash-layout {
+	display: grid !important;
+	grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) !important;
+	gap: 1.25rem !important;
+	align-items: start !important;
+}
+.account-premium .dash-layout-side { position: sticky; top: 1rem; max-width: 100%; }
+.account-premium .dash-layout-main { min-width: 0 !important; max-width: 100%; overflow: hidden; }
+
+/* NEVER let product / media images blow up the layout */
+.account-premium img {
+	max-width: 100%;
+	height: auto;
+}
+.account-premium .order-thumb,
+.account-premium img.order-thumb {
+	width: 48px !important;
+	height: 48px !important;
+	max-width: 48px !important;
+	max-height: 48px !important;
+	object-fit: cover !important;
+	border-radius: 8px !important;
+	flex-shrink: 0 !important;
+	display: block !important;
+}
+.account-premium .dash-prod-stack img {
+	width: 32px !important;
+	height: 32px !important;
+	max-width: 32px !important;
+	max-height: 32px !important;
+	object-fit: cover !important;
+	border-radius: 8px !important;
+}
+.account-premium .dash-product-img {
+	display: block !important;
+	width: 100% !important;
+	aspect-ratio: 1 / 1 !important;
+	height: auto !important;
+	max-height: 220px !important;
+	overflow: hidden !important;
+	background: #eef2f7 !important;
+	position: relative !important;
+}
+.account-premium .dash-product-img img {
+	width: 100% !important;
+	height: 100% !important;
+	max-height: 220px !important;
+	object-fit: cover !important;
+	display: block !important;
+}
+.account-premium .rv-thumb,
+.account-premium img.rv-thumb {
+	width: 64px !important;
+	height: 64px !important;
+	max-width: 64px !important;
+	max-height: 64px !important;
+	object-fit: cover !important;
+	border-radius: 10px !important;
+}
+.account-premium .dash-avatar,
+.account-premium img.dash-avatar {
+	width: 72px !important;
+	height: 72px !important;
+	max-width: 72px !important;
+	object-fit: cover !important;
+	border-radius: 50% !important;
+}
+.account-premium .dash-avatar.lg {
+	width: 56px !important;
+	height: 56px !important;
+}
+.account-premium .dash-product-grid {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+	gap: 0.85rem !important;
+}
+.account-premium .dash-slider {
+	display: flex !important;
+	gap: 0.85rem !important;
+	overflow-x: auto !important;
+	padding-bottom: 0.25rem;
+}
+.account-premium .dash-slide,
+.account-premium .dash-slider .dash-product-card {
+	flex: 0 0 170px !important;
+	max-width: 170px !important;
+	width: 170px !important;
+}
+.account-premium .dash-stats {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+	gap: 0.75rem !important;
+}
+.account-premium .dash-quick {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+	gap: 0.65rem !important;
+}
+.account-premium .table-responsive { overflow-x: auto !important; max-width: 100%; }
+.account-premium .dash-table img { max-width: 32px !important; max-height: 32px !important; }
+
+@media (max-width: 991px) {
+	.account-premium .dash-layout {
+		grid-template-columns: 1fr !important;
+	}
+	.account-premium .dash-layout-side { position: static !important; }
+}
+</style>

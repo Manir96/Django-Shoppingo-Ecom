@@ -91,23 +91,42 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    GENDER_CHOICES = (
+        ("male", "Male"),
+        ("female", "Female"),
+        ("other", "Other"),
+        ("prefer_not", "Prefer not to say"),
+    )
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     username = models.CharField(max_length=150, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True)
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     country_name = models.ForeignKey(CountryName, on_delete=models.SET_NULL, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [] 
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
+
+    def get_full_name(self):
+        name = f"{self.first_name} {self.last_name}".strip()
+        return name or self.username or self.email
+
+    def get_short_name(self):
+        return self.first_name or self.email.split("@")[0]
 
 
 @property

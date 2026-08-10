@@ -1,138 +1,97 @@
 {% extends 'base/base-code.html' %}
 {% load static %}
-{% block title %}Account Orders{% endblock title %}
+{% block title %}My Orders{% endblock %}
 {% block main-content %}
-	<!--start page wrapper -->
-	<div class="page-wrapper">
-		<div class="page-content">
-			<!--start breadcrumb-->
-			<section class="py-3 border-bottom border-top d-none d-md-flex bg-light">
-				<div class="container">
-					<div class="page-breadcrumb d-flex align-items-center">
-						<h3 class="breadcrumb-title pe-3">My Orders</h3>
-						<div class="ms-auto">
-							<nav aria-label="breadcrumb">
-								<ol class="breadcrumb mb-0 p-0">
-									<li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i> Home</a>
-									</li>
-									<li class="breadcrumb-item"><a href="javascript:;">Account</a>
-									</li>
-									<li class="breadcrumb-item active" aria-current="page">My Orders</li>
-								</ol>
-							</nav>
-						</div>
-					</div>
-				</div>
-			</section>
-			<!--end breadcrumb-->
-			<!--start shop cart-->
-			<section class="py-4">
-				<div class="container">
-					<h3 class="d-none">Account</h3>
-					<div class="card">
-						<div class="card-body">
-							<div class="row">
-								<div class="col-lg-4">
-									<div class="card shadow-none mb-3 mb-lg-0 border">
-										<div class="card-body">
-												<div class="list-group list-group-flush">	
-													<a href="{% url 'account-dashboard' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Dashboard <i class='bx bx-tachometer fs-5'></i></a>
-													<a href="{% url 'account-orders' %}" class="list-group-item active d-flex justify-content-between align-items-center">Orders <i class='bx bx-cart-alt fs-5'></i></a>
-													<a href="{% url 'account-downloads' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Downloads <i class='bx bx-download fs-5'></i></a>
-													<a href="{% url 'account-addresses' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Addresses <i class='bx bx-home-smile fs-5'></i></a>
-													<a href="{% url 'account-payment-methods' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Payment Methods <i class='bx bx-credit-card fs-5'></i></a>
-													<a href="{% url 'account-user-details' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Account Details <i class='bx bx-user-circle fs-5'></i></a>
-													<a href="{% url 'user_logout' %}" class="list-group-item d-flex justify-content-between align-items-center bg-transparent">Logout <i class='bx bx-log-out fs-5'></i></a>
-												</div>
-											</div>
-									</div>
-								</div>
-								<div class="col-lg-8">
-									<div class="card shadow-none mb-0">
-										<div class="card-body">
-											<div class="table-responsive">
-												<table class="table">
-													<thead class="table-light">
-														<tr>
-															<th>Order</th>
-															<th>Date</th>
-															<th>Status</th>
-															<th>Total</th>
-															<th>Actions</th>
-														</tr>
-													</thead>
-													<tbody>
-														{% if orders %}
-															{% for order in orders %}
-																<tr>
-																	<!-- Order Number -->
-																	<td>#{{ order.id }}</td>
+{% with page_title="Orders" %}
+{% include 'accounts/partials/layout_start.html' %}
 
-																	<!-- Date -->
-																	<td>{{ order.created_at|date:"F d, Y" }}</td>
+<header class="dash-hero glass-card fade-up" style="margin-bottom:1rem;">
+	<div>
+		<p class="dash-greeting">Orders</p>
+		<h1 style="font-size:1.45rem;margin:0;">Your orders</h1>
+		<p class="text-muted small mb-0 mt-1">Track, reorder, or download invoices.</p>
+	</div>
+	<form method="get">
+		<select name="status" class="form-select form-select-sm rounded-3" style="min-width:150px;" onchange="this.form.submit()">
+			<option value="">All statuses</option>
+			<option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+			<option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+			<option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+			<option value="onway" {% if status_filter == 'onway' %}selected{% endif %}>On the way</option>
+			<option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+			<option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+		</select>
+	</form>
+</header>
 
-																	<!-- Status -->
-																	<td>
-																		{% if order.order_status %}
-																			{% if order.order_status.name == "Completed" %}
-																				<div class="badge rounded-pill bg-success w-100">
-																					{{ order.order_status.name }}
-																				</div>
-																			{% elif order.order_status.name == "Cancelled" or order.order_status.name == "Failed" %}
-																				<div class="badge rounded-pill bg-danger w-100">
-																					{{ order.order_status.name }}
-																				</div>
-																			{% else %}
-																				<div class="badge rounded-pill bg-warning w-100">
-																					{{ order.order_status.name }}
-																				</div>
-																			{% endif %}
-																		{% else %}
-																			<div class="badge rounded-pill bg-secondary w-100">
-																				Pending
-																			</div>
-																		{% endif %}
-																	</td>
+{% for co in orders %}
+<article class="glass-card dash-panel fade-up" style="margin-bottom:0.85rem;padding:1rem 1.1rem;">
+	<div class="d-flex justify-content-between flex-wrap gap-2 align-items-start mb-2">
+		<div>
+			<a href="{% url 'account-order-detail' co.id %}" class="fw-bold text-dark text-decoration-none">Order #{{ co.order.id }}</a>
+			<div class="small text-muted">{{ co.completed_at|date:"M d, Y H:i" }}{% if co.tracking_id %} · {{ co.tracking_id }}{% endif %}</div>
+		</div>
+		<span class="status-badge {{ co.order.order_status.status|default:'confirmed' }}">
+			{{ co.order.order_status.get_status_display|default:"Confirmed" }}
+		</span>
+	</div>
 
-																	<!-- Total -->
-																	<td>
-																		{{ order.total_amount }} ৳ 
-																		for {{ order.items.count }} item{{ order.items.count|pluralize }}
-																	</td>
-
-																	<!-- Actions -->
-																	<td>
-																		<div class="d-flex gap-2">
-																			<a href="{% url 'account-order-detail' order.id %}" class="btn btn-dark btn-sm rounded-0">
-																				View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-															{% endfor %}
-														{% else %}
-															<tr>
-																<td colspan="5" class="text-center">
-																	You have no orders yet.
-																</td>
-															</tr>
-														{% endif %}
-													</tbody>
-
-
-												</table>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<!--end row-->
-						</div>
-					</div>
-				</div>
-			</section>
-			<!--end shop cart-->
+	{% for item in co.order_items.all %}
+	<div class="d-flex align-items-center gap-2 mb-2" style="min-width:0;">
+		{% if item.product.images.first %}
+		<img src="{{ item.product.images.first.image.url }}" class="order-thumb" width="48" height="48" alt="{{ item.product.title }}" loading="lazy" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+		{% else %}
+		<span class="order-thumb" style="width:48px;height:48px;background:#eef2f7;border-radius:8px;flex-shrink:0;display:inline-block;"></span>
+		{% endif %}
+		<div class="flex-grow-1 min-w-0">
+			<div class="text-truncate fw-semibold" style="font-size:0.9rem;">{{ item.product.title }}</div>
+			<div class="small text-muted">
+				{% if item.size %}{{ item.size }} · {% endif %}{% if item.color %}{{ item.color }} · {% endif %}
+				Qty {{ item.quantity }} · ${{ item.item_total|floatformat:2 }}
+			</div>
 		</div>
 	</div>
-	<!--end page wrapper -->
-{% endblock main-content %}
+	{% empty %}
+	<p class="small text-muted mb-2">No line items.</p>
+	{% endfor %}
+
+	<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 mt-1 border-top">
+		<strong>${{ co.total_amount|floatformat:2 }}</strong>
+		<div class="d-flex flex-wrap gap-1">
+			<a href="{% url 'account-order-detail' co.id %}" class="btn btn-sm dash-btn-ghost">View</a>
+			{% if co.order.invoice %}
+			<a href="{% url 'invoice-detail' co.order.invoice.invoice_number %}" class="btn btn-sm dash-btn-ghost" target="_blank">Invoice</a>
+			{% endif %}
+			<a href="{% url 'order-tracking' %}?tracking_id={{ co.tracking_id }}" class="btn btn-sm dash-btn-ghost">Track</a>
+			<form method="post" action="{% url 'account-reorder' co.id %}" class="d-inline">{% csrf_token %}
+				<button class="btn btn-sm dash-btn-primary" type="submit">Reorder</button>
+			</form>
+		</div>
+	</div>
+</article>
+{% empty %}
+<div class="glass-card dash-empty">
+	<div class="dash-empty-illu"><i class="bx bx-package"></i></div>
+	<h3>No orders yet</h3>
+	<p>When you place an order, it will show up here.</p>
+	<a href="{% url 'home' %}" class="btn dash-btn-primary">Continue Shopping</a>
+</div>
+{% endfor %}
+
+{% if page_obj.has_other_pages %}
+<nav class="mt-3">
+	<ul class="pagination pagination-sm mb-0">
+		{% if page_obj.has_previous %}
+		<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Prev</a></li>
+		{% endif %}
+		<li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+		{% if page_obj.has_next %}
+		<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a></li>
+		{% endif %}
+	</ul>
+</nav>
+{% endif %}
+
+{% include 'accounts/partials/layout_end.html' %}
+{% endwith %}
+{% endblock %}

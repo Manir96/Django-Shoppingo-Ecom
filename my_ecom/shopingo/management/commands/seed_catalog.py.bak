@@ -1,0 +1,302 @@
+"""Management command: seed mega-menu catalog with categories, products, images."""
+from __future__ import annotations
+
+import io
+import random
+import urllib.error
+import urllib.request
+from decimal import Decimal
+from pathlib import Path
+
+from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
+from django.core.management.base import BaseCommand
+from django.utils.text import slugify
+from PIL import Image, ImageDraw, ImageFont
+
+from shopingo.catalog_data import CATALOG, UNSPLASH_POOLS, unsplash_url
+from shopingo.models import Brand, Category, Product, ProductImage, ProductTag, SubCategory, Tag
+
+User = get_user_model()
+
+DEMO_CATEGORY_NAMES = [c["name"] for c in CATALOG]
+
+
+class Command(BaseCommand):
+    help = "Seed 4 main categories, 20 subcategories, ~240 products with images for the mega menu."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--clear",
+            action="store_true",
+            help="Remove previously seeded demo catalog categories/products first.",
+        )
+        parser.add_argument(
+            "--skip-images",
+            action="store_true",
+            help="Skip remote image download (use generated placeholders only).",
+        )
+
+    def handle(self, *args, **options):
+        if options["clear"]:
+            self._clear_demo_catalog()
+
+        seller = self._get_seller()
+        image_cache: dict[str, bytes] = {}
+        total_products = 0
+        skip_images = options["skip_images"]
+
+        # Keep mega menu focused on the 4 seeded main categories
+        Category.objects.exclude(name__in=DEMO_CATEGORY_NAMES).update(is_active=False)
+
+        for cat_order, cat_data in enumerate(CATALOG, start=1):
+            category, _ = Category.objects.update_or_create(
+                name=cat_data["name"],
+                defaults={
+                    "description": cat_data["description"],
+                    "icon": cat_data["icon"],
+                    "promo_title": cat_data["promo_title"],
+                    "promo_text": cat_data["promo_text"],
+                    "menu_order": cat_order,
+                    "is_active": True,
+                    "meta_title": f"Shop {cat_data['name']} Online | Shopingo",
+                    "meta_description": cat_data["description"][:160],
+                    "meta_keywords": f"{cat_data['name']}, buy online, shopingo",
+                },
+            )
+            self.stdout.write(self.style.SUCCESS(f"Category: {category.name}"))
+
+            folder = cat_data["folder"]
+            pool = UNSPLASH_POOLS.get(folder, UNSPLASH_POOLS["electronics"])
+
+            if not skip_images:
+                self._attach_category_media(category, folder, pool[0], image_cache)
+
+            for sub_order, sub_data in enumerate(cat_data["subs"], start=1):
+                subcategory, _ = SubCategory.objects.update_or_create(
+                    name=sub_data["name"],
+                    defaults={
+                        "category": category,
+                        "description": f"Browse {sub_data['name']} in {category.name}.",
+                        "menu_order": sub_order,
+                        "is_active": True,
+                        "meta_title": f"{sub_data['name']} | {category.name} | Shopingo",
+                        "meta_description": f"Shop the best {sub_data['name']} products at Shopingo.",
+                        "meta_keywords": f"{sub_data['name']}, {category.name}",
+                    },
+                )
+
+                for idx, (title, brand_name, regular, sale) in enumerate(sub_data["products"]):
+                    Brand.objects.get_or_create(
+                        name=brand_name,
+                        defaults={"slug": slugify(brand_name)},
+                    )
+                    sku = (
+                        f"{slugify(category.name)[:3].upper()}-"
+                        f"{slugify(sub_data['name']).replace('-', '')[:6].upper()}-"
+                        f"{idx+1:03d}"
+                    )
+                    product, created = Product.objects.update_or_create(
+                        sku=sku,
+                        defaults=self._product_defaults(
+                            title=title,
+                            brand_name=brand_name,
+                            regular=regular,
+                            sale=sale,
+                            category=category,
+                            subcategory=subcategory,
+                            seller=seller,
+                            idx=idx,
+                        ),
+                    )
+                    self._attach_tags(product, category, subcategory, brand_name)
+
+                    if skip_images:
+                        self._attach_placeholder_images(product, folder, title)
+                    else:
+                        photo_id = pool[idx % len(pool)]
+                        self._attach_remote_images(
+                            product, folder, title, photo_id, image_cache
+                        )
+
+                        if idx == 0 and not subcategory.featured_image:
+                            self._attach_subcategory_image(
+                                subcategory, folder, title, photo_id, image_cache
+                            )
+
+                    total_products += 1
+                    action = "Created" if created else "Updated"
+                    self.stdout.write(f"  {action}: {product.title}")
+
+        self.stdout.write(self.style.SUCCESS(
+            f"Done. Seeded {len(CATALOG)} categories, "
+            f"{sum(len(c['subs']) for c in CATALOG)} subcategories, "
+            f"{total_products} products."
+        ))
+
+    def _clear_demo_catalog(self):
+        cats = Category.objects.filter(name__in=DEMO_CATEGORY_NAMES)
+        count = cats.count()
+        cats.delete()
+        self.stdout.write(self.style.WARNING(f"Cleared {count} demo categories (cascade products)."))
+
+    def _get_seller(self):
+        user = (
+            User.objects.filter(email="seller1@demo.com").first()
+            or User.objects.filter(is_staff=True).first()
+            or User.objects.first()
+        )
+        if not user:
+            user = User.objects.create_user(
+                email="catalogseller@demo.com",
+                password="Password@123",
+                username="catalogseller",
+            )
+        return user
+
+    def _product_defaults(self, *, title, brand_name, regular, sale, category, subcategory, seller, idx):
+        regular_d = Decimal(str(regular))
+        sale_d = Decimal(str(sale))
+        flags = {
+            "is_featured": idx % 4 == 0,
+            "is_new_arrival": idx % 3 == 0,
+            "is_bestseller": idx % 5 == 0,
+            "is_trending": idx % 4 == 1,
+            "is_popular": idx % 3 == 1,
+            "is_recommended": idx % 5 == 1,
+            "is_flash_sale": idx % 6 == 0,
+        }
+        short = f"{brand_name} {title} — premium quality with fast shipping and warranty support."
+        long_html = (
+            f"<p><strong>{title}</strong> by {brand_name} is a top pick in "
+            f"{subcategory.name}. Designed for everyday performance with reliable build quality.</p>"
+            f"<ul><li>Brand: {brand_name}</li><li>Category: {category.name}</li>"
+            f"<li>Subcategory: {subcategory.name}</li><li>Genuine product</li>"
+            f"<li>Easy returns</li></ul>"
+        )
+        return {
+            "title": title,
+            "brand_name": brand_name,
+            "short_description": short[:300],
+            "description": long_html,
+            "description_details": long_html,
+            "more_information": f"<p>SKU managed stock. Seller-fulfilled from Shopingo warehouse.</p>",
+            "price": regular_d,
+            "orginal_price": sale_d,
+            "discount_price": regular_d - sale_d,
+            "stock": random.randint(8, 120),
+            "rating": Decimal(str(round(random.uniform(3.8, 4.9), 2))),
+            "review_count": random.randint(12, 860),
+            "category": category,
+            "subcategory": subcategory,
+            "seller": seller,
+            "meta_title": f"Buy {title} | {brand_name} | Shopingo",
+            "meta_description": short[:160],
+            "meta_keywords": f"{title}, {brand_name}, {subcategory.name}, {category.name}",
+            **flags,
+        }
+
+    def _attach_tags(self, product, category, subcategory, brand_name):
+        for name in (category.name, subcategory.name, brand_name, "Shopingo"):
+            tag, _ = Tag.objects.get_or_create(name=name[:50], defaults={"slug": slugify(name)[:100]})
+            ProductTag.objects.get_or_create(product=product, tag=tag)
+
+    def _download(self, url: str, cache: dict[str, bytes]) -> bytes | None:
+        if url in cache:
+            return cache[url]
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "ShopingoSeedBot/1.0"},
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = resp.read()
+            if data:
+                cache[url] = data
+                return data
+        except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+            self.stdout.write(self.style.WARNING(f"Image download failed: {url} ({exc})"))
+        return None
+
+    def _make_placeholder(self, title: str, folder: str) -> bytes:
+        colors = {
+            "electronics": (30, 64, 120),
+            "fashion": (120, 40, 70),
+            "home": (40, 100, 70),
+            "beauty": (120, 70, 110),
+        }
+        bg = colors.get(folder, (50, 50, 50))
+        img = Image.new("RGB", (800, 800), bg)
+        draw = ImageDraw.Draw(img)
+        text = title[:28]
+        draw.rectangle((40, 340, 760, 460), fill=(255, 255, 255))
+        draw.text((60, 380), text, fill=bg)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        return buf.getvalue()
+
+    def _save_product_images(self, product, folder, title, image_bytes: bytes):
+        product.images.all().delete()
+        base = slugify(title)[:40] or "product"
+
+        # Always store a centered square primary image
+        square_bytes = self._to_square(image_bytes, 800)
+
+        primary = ProductImage(product=product, is_primary=True, is_thumbnail=False, alt_text=title)
+        primary.image.save(f"{base}-primary.jpg", ContentFile(square_bytes), save=True)
+
+        thumb_bytes = self._to_square(image_bytes, 400)
+        thumb = ProductImage(product=product, is_primary=False, is_thumbnail=True, alt_text=f"{title} thumbnail")
+        thumb.image.save(f"{base}-thumb.jpg", ContentFile(thumb_bytes), save=True)
+
+        if not product.og_image:
+            product.og_image.save(f"{base}-og.jpg", ContentFile(square_bytes), save=True)
+
+    def _to_square(self, image_bytes: bytes, size: int) -> bytes:
+        try:
+            im = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            w, h = im.size
+            side = min(w, h)
+            left = (w - side) // 2
+            top = (h - side) // 2
+            im = im.crop((left, top, left + side, top + side))
+            im = im.resize((size, size), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, format="JPEG", quality=88, optimize=True)
+            return buf.getvalue()
+        except Exception:
+            return image_bytes
+
+    def _fetch_image_bytes(self, title: str, folder: str, photo_id: str, cache: dict) -> bytes:
+        # Prefer Picsum (stable) then Unsplash, then local placeholder
+        seed = slugify(title) or photo_id
+        data = self._download(f"https://picsum.photos/seed/{seed}/800/800", cache)
+        if not data:
+            data = self._download(unsplash_url(photo_id, 800), cache)
+        if not data:
+            data = self._make_placeholder(title, folder)
+        return data
+
+    def _attach_remote_images(self, product, folder, title, photo_id, cache):
+        data = self._fetch_image_bytes(title, folder, photo_id, cache)
+        self._save_product_images(product, folder, title, data)
+
+    def _attach_placeholder_images(self, product, folder, title):
+        data = self._make_placeholder(title, folder)
+        self._save_product_images(product, folder, title, data)
+
+    def _attach_category_media(self, category, folder, photo_id, cache):
+        data = self._fetch_image_bytes(category.name, folder, photo_id, cache)
+        slug = slugify(category.name)
+        if not category.banner:
+            category.banner.save(f"{slug}-banner.jpg", ContentFile(data), save=False)
+        if not category.featured_image:
+            category.featured_image.save(f"{slug}-featured.jpg", ContentFile(data), save=False)
+        if not category.og_image:
+            category.og_image.save(f"{slug}-og.jpg", ContentFile(data), save=False)
+        category.save()
+
+    def _attach_subcategory_image(self, subcategory, folder, title, photo_id, cache):
+        data = self._fetch_image_bytes(title, folder, photo_id, cache)
+        slug = slugify(subcategory.name)
+        subcategory.featured_image.save(f"{slug}-featured.jpg", ContentFile(data), save=True)

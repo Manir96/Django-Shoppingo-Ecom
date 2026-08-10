@@ -50,12 +50,12 @@
                                                 </div>
                                                 <div class="step-label"><i class='bx bx-cube'></i>Shipping</div>
                                             </a>
-                                            <a class="step-item active current" href="{% url 'checkout-payment' %}">
+                                            <a class="step-item active" href="{% url 'checkout-payment' %}">
                                                 <div class="step-progress"><span class="step-count">4</span>
                                                 </div>
                                                 <div class="step-label"><i class='bx bx-credit-card'></i>Payment</div>
                                             </a>
-                                            <a class="step-item" href="{% url 'checkout-review' %}">
+                                            <a class="step-item active current" href="{% url 'checkout-review' %}">
                                                 <div class="step-progress"><span class="step-count">5</span>
                                                 </div>
                                                 <div class="step-label"><i class='bx bx-check-circle'></i>Review</div>
@@ -148,12 +148,22 @@
                                             </div>
 
                                             <div class="col-md-6">
-                                                <div class="payment-mode">
+                                                <div class="payment-mode mb-4">
                                                     <h5 class="mb-3">Payment Mode:</h5>
-                                                    {% if order_items %}
-                                                        <h4>{{ order_items.first.payment_method|default:"Not selected" }}</h4>
+                                                    {% if payment %}
+                                                        <h4>{{ payment.get_method_display }}</h4>
+                                                        <p class="text-muted mb-0">Status: {{ payment.get_status_display }}</p>
                                                     {% else %}
                                                         <p class="text-muted">No payment method found.</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="shipping-mode">
+                                                    <h5 class="mb-3">Shipping Method:</h5>
+                                                    {% if shipping_method %}
+                                                        <h4>{{ shipping_method.Shipping_type_name }}</h4>
+                                                        <p class="text-muted mb-0">${{ shipping_method.charge_amount|floatformat:2 }} · {{ shipping_method.delivery_time|default:shipping_method.estimated_days }} days</p>
+                                                    {% else %}
+                                                        <p class="text-muted">Not selected.</p>
                                                     {% endif %}
                                                 </div>
                                             </div>
@@ -165,14 +175,17 @@
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <div class="d-grid"><a href="javascript:;" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Payment</a>
+                                                <div class="d-grid"><a href="{% url 'checkout-payment' %}" class="btn btn-light btn-ecomm"><i class="bx bx-chevron-left"></i>Back to Payment</a>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="d-grid">
-                                                    <a href="{% url 'checkout-complete' order.id %}" class="btn btn-outline-dark btn-ecomm">
-                                                        Complete Order <i class="bx bx-chevron-right"></i>
-                                                    </a>
+                                                    <form method="post" action="{% url 'checkout-complete' order.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-dark btn-ecomm w-100">
+                                                            Place Order <i class="bx bx-chevron-right"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
@@ -220,11 +233,12 @@
                                             <p class="mb-0">Discount: <span class="float-end">-$0.00</span></p>
                                             <h5 class="mb-0">Order Total: <span class="float-end">$0.00</span></h5> 
                                         {% endif %}
-                                        <div class="d-grid">
-                                            <a href="{% url 'checkout-complete' order.id %}" class="btn btn-dark btn-ecomm">Complete Order</a>
+                                        <div class="d-grid mt-3">
+                                            <form method="post" action="{% url 'checkout-complete' order.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-dark btn-ecomm w-100">Place Order</button>
+                                            </form>
                                         </div>
-                                        
-
                                     </div>
                                 </div>
 

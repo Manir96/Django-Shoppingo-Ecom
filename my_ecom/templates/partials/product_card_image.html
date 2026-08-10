@@ -1,0 +1,10 @@
+{% load static %}
+<a href="{% url 'product-detail' product.slug %}">
+	{% with first_image=product.images.first %}
+		{% if first_image %}
+			<img src="{{ first_image.image.url }}" alt="{{ product.title }}">
+		{% else %}
+			<img src="{% static 'assets/images/placeholder.png' %}" alt="{{ product.title }}">
+		{% endif %}
+	{% endwith %}
+</a>

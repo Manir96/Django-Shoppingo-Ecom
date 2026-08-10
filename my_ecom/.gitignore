@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+*.sqlite3-journal
+
+# Static / media (collected / uploaded)
+# Keep source static/; ignore collectstatic output if regenerated
+# staticfiles/ may exist in repo historically — do not re-add secrets there
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
