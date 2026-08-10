@@ -37,33 +37,170 @@ jobs:
         run: |
           python manage.py test
 
-  # deploy:
-  #   name: Deploy to VPS
-  #   needs: test
-  #   # sudhu main branch e push hole deploy hobe, PR e na
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
+  name: Django CI/CD
 
-  #   steps:
-  #     - name: Deploy over SSH
-  #       uses: appleboy/ssh-action@v0.1.10
-  #       with:
-  #         host: ${{ secrets.DEPLOY_HOST }}
-  #         username: ${{ secrets.DEPLOY_USER }}
-  #         key: ${{ secrets.DEPLOY_KEY }}
-  #         port: ${{ secrets.DEPLOY_PORT }}
-  #         script: |
-  #           cd ${{ secrets.DEPLOY_DIR }}
-  #           git pull origin main
+on:
+  push:
+    branches: ["main"]
 
-  #           # virtualenv activate
-  #           source venv/bin/activate
+  pull_request:
+    branches: ["main"]
 
-  #           # Django project folder
-  #           cd my_ecom
-  #           pip install -r requirements.txt
-  #           python manage.py migrate --noinput
-  #           python manage.py collectstatic --noinput
 
-  #           # gunicorn/nginx service restart
-  #           sudo systemctl restart shoppingo
+jobs:
+
+  # =========================================================
+  # TEST JOB
+  # =========================================================
+  test:
+    name: Django Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: my_ecom
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate --noinput
+
+      - name: Run Django tests
+        run: |
+          python manage.py test
+
+
+  # =========================================================
+  # DEPLOY JOB
+  # =========================================================
+  deploy:
+    name: Deploy to cPanel
+    needs: test
+
+    # Deploy ONLY when code is pushed to main.
+    # Pull requests will NOT deploy.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Deploy to cPanel via SSH
+        uses: appleboy/ssh-action@v1.2.5
+
+        with:
+
+          # -----------------------------------------------
+          # cPanel SSH connection
+          # -----------------------------------------------
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          port: ${{ secrets.DEPLOY_PORT }}
+
+          # New SSH private key
+          key: ${{ secrets.DEPLOY_KEY }}
+
+          # If your new SSH key has a passphrase
+          passphrase: ${{ secrets.DEPLOY_PASSPHRASE }}
+
+          # Stop immediately if any command fails
+          script_stop: true
+
+          # -----------------------------------------------
+          # Deployment script
+          # -----------------------------------------------
+          script: |
+
+            echo "======================================"
+            echo "Starting ManirShop deployment"
+            echo "======================================"
+
+            # -------------------------------------------
+            # Project directory
+            # -------------------------------------------
+            cd "${{ secrets.DEPLOY_DIR }}"
+
+            echo "Project directory:"
+            pwd
+
+            # -------------------------------------------
+            # Update repository
+            # -------------------------------------------
+            echo "Fetching latest code..."
+
+            git fetch origin main
+
+            echo "Resetting server to GitHub main..."
+
+            git reset --hard origin/main
+
+            # -------------------------------------------
+            # Activate cPanel Python 3.13 environment
+            # -------------------------------------------
+            echo "Activating Python 3.13 environment..."
+
+            source "${{ secrets.DEPLOY_VENV }}/bin/activate"
+
+            echo "Python version:"
+            python --version
+
+            echo "Python location:"
+            which python
+
+            # -------------------------------------------
+            # Django application directory
+            # -------------------------------------------
+            cd my_ecom
+
+            echo "Django directory:"
+            pwd
+
+            # -------------------------------------------
+            # Install/update dependencies
+            # -------------------------------------------
+            echo "Installing Python dependencies..."
+
+            python -m pip install --upgrade pip
+
+            pip install -r requirements.txt
+
+            # -------------------------------------------
+            # Database migrations
+            # -------------------------------------------
+            echo "Running Django migrations..."
+
+            python manage.py migrate --noinput
+
+            # -------------------------------------------
+            # Collect static files
+            # -------------------------------------------
+            echo "Collecting static files..."
+
+            python manage.py collectstatic --noinput
+
+            # -------------------------------------------
+            # Restart Passenger
+            # -------------------------------------------
+            echo "Restarting Passenger..."
+
+            mkdir -p tmp
+
+            touch tmp/restart.txt
+
+            echo "======================================"
+            echo "Deployment completed successfully!"
+            echo "======================================"
