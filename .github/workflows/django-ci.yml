@@ -74,6 +74,22 @@ jobs:
 
     steps:
 
+      - name: Prepare SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "DEPLOY_KEY secret is empty. Add your private key in GitHub → Settings → Secrets."
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" | sed 's/\r$//' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/deploy_key; then
+            echo "DEPLOY_KEY is invalid. Paste the full key including BEGIN/END lines."
+            exit 1
+          fi
+
       - name: Deploy to cPanel via SSH
         uses: appleboy/ssh-action@v1.2.5
 
@@ -82,12 +98,10 @@ jobs:
           username: ${{ env.DEPLOY_USER }}
           port: ${{ env.DEPLOY_PORT }}
 
-          key: ${{ secrets.DEPLOY_KEY }}
+          key_path: ~/.ssh/deploy_key
 
           # Required because github-deploy-ecom key is passphrase-protected
           passphrase: ${{ secrets.DEPLOY_PASSPHRASE }}
-
-          script_stop: true
 
           script: |
 
