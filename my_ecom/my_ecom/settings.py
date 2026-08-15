@@ -142,7 +142,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [static_dir]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -156,6 +156,9 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
+
+# WhiteNoise serves files collected into STATIC_ROOT (run collectstatic on deploy).
+WHITENOISE_USE_FINDERS = DEBUG
 
 # Serve uploaded media via Django when Nginx/S3 is not configured (local / small deploys)
 SERVE_MEDIA = _env_bool('SERVE_MEDIA', default=True)
