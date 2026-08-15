@@ -1,10 +1,6 @@
 ---
 # cPanel Git Version Control — runs when you click "Deploy HEAD Commit"
-# Adjust VENV path if your Python app lives elsewhere (cPanel → Setup Python App).
+# Virtualenv: cPanel → Setup Python App → Django-Shoppingo-Ecom
 deployment:
   tasks:
-    - cd my_ecom
-    - pip install -r requirements.txt
-    - python manage.py migrate --noinput
-    - python manage.py collectstatic --noinput
-    - /bin/touch ../tmp/restart.txt 2>/dev/null || true
+    - /bin/bash -lc 'source "/home/manirsho/virtualenv/Django-Shoppingo-Ecom/my_ecom/3.13/bin/activate" && cd /home/manirsho/Django-Shoppingo-Ecom/my_ecom && python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && mkdir -p tmp && touch tmp/restart.txt'

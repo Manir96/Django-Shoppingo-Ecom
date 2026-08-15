@@ -65,19 +65,26 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      DEPLOY_HOST: cloud.webfastdns.com
+      DEPLOY_USER: manirsho
+      DEPLOY_PORT: "22"
+      DEPLOY_DIR: /home/manirsho/Django-Shoppingo-Ecom
+      DEPLOY_VENV: /home/manirsho/virtualenv/Django-Shoppingo-Ecom/my_ecom/3.13
+
     steps:
 
       - name: Deploy to cPanel via SSH
         uses: appleboy/ssh-action@v1.2.5
 
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          port: ${{ secrets.DEPLOY_PORT }}
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          port: ${{ env.DEPLOY_PORT }}
 
           key: ${{ secrets.DEPLOY_KEY }}
 
-          # Use this only if your SSH private key has a passphrase
+          # Required because github-deploy-ecom key is passphrase-protected
           passphrase: ${{ secrets.DEPLOY_PASSPHRASE }}
 
           script_stop: true
@@ -88,76 +95,32 @@ jobs:
             echo "Starting ManirShop deployment"
             echo "======================================"
 
-            # -------------------------------------------
-            # Go to Git repository
-            # -------------------------------------------
-            cd "${{ secrets.DEPLOY_DIR }}"
+            cd "${{ env.DEPLOY_DIR }}"
 
             echo "Project directory:"
             pwd
 
-            # -------------------------------------------
-            # Get latest code from GitHub
-            # -------------------------------------------
             echo "Fetching latest code..."
-
             git fetch origin main
-
-            echo "Resetting server to GitHub main..."
-
             git reset --hard origin/main
 
-            # -------------------------------------------
-            # Activate cPanel Python 3.13 environment
-            # -------------------------------------------
             echo "Activating Python 3.13..."
+            source "${{ env.DEPLOY_VENV }}/bin/activate"
 
-            source "${{ secrets.DEPLOY_VENV }}/bin/activate"
-
-            echo "Python version:"
             python --version
-
-            echo "Python path:"
             which python
 
-            # -------------------------------------------
-            # Django project
-            # -------------------------------------------
             cd my_ecom
 
             echo "Django project directory:"
             pwd
 
-            # -------------------------------------------
-            # Install requirements
-            # -------------------------------------------
-            echo "Installing dependencies..."
-
             python -m pip install --upgrade pip
-
             pip install -r requirements.txt
-
-            # -------------------------------------------
-            # Django migrations
-            # -------------------------------------------
-            echo "Running migrations..."
-
             python manage.py migrate --noinput
-
-            # -------------------------------------------
-            # Collect static files
-            # -------------------------------------------
-            echo "Collecting static files..."
-
             python manage.py collectstatic --noinput
 
-            # -------------------------------------------
-            # Restart cPanel Passenger
-            # -------------------------------------------
-            echo "Restarting Passenger..."
-
             mkdir -p tmp
-
             touch tmp/restart.txt
 
             echo "======================================"
