@@ -160,7 +160,7 @@ class AccountModuleTests(TestCase):
         self.assertContains(r, "Amina")
         self.assertContains(r, "Welcome back")
         self.assertContains(r, "Recent orders")
-        self.assertContains(r, "Order #")
+        self.assertContains(r, f"#{self.completed.order.id}")
 
     def test_orders_list_and_idor(self):
         r = self.client.get(reverse("account-orders"))
