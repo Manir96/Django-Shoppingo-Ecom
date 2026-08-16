@@ -31,10 +31,11 @@ def _env_list(name: str, default=None):
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = (os.getenv('SECRET_KEY') or '').strip().strip('"').strip("'")
 if not SECRET_KEY:
     raise ImproperlyConfigured(
-        'SECRET_KEY is not set. Copy .env.example to .env and set SECRET_KEY.'
+        'SECRET_KEY is not set. Create my_ecom/.env from .env.example and set '
+        'SECRET_KEY in double quotes if it contains # or $ characters.'
     )
 
 DEBUG = _env_bool('DEBUG', default=False)
@@ -147,6 +148,9 @@ STATICFILES_DIRS = [static_dir]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS  = [static_dir,]
+STATIC_ROOT = 'staticfiles'
 
 STORAGES = {
     'default': {
