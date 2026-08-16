@@ -1,21 +1,17 @@
-
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.views.static import serve
-from django.conf.urls.static import static
 
-from shopingo.error_views import product_search
+from shopingo import error_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('search/', product_search, name='product-search'),
+    path('search/', error_views.product_search, name='product-search'),
     path('', include('shopingo.urls')),
     path('', include('accounts.urls')),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('chaining/', include('smart_selects.urls')),
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
 
 # Media serving for local / small deploys when SERVE_MEDIA=True (WhiteNoise does not serve media)

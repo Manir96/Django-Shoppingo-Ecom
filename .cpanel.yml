@@ -3,4 +3,4 @@
 # Virtualenv: cPanel → Setup Python App → Django-Shoppingo-Ecom
 deployment:
   tasks:
-    - /bin/bash -lc 'source "/home/manirsho/virtualenv/Django-Shoppingo-Ecom/my_ecom/3.13/bin/activate" && cd /home/manirsho/Django-Shoppingo-Ecom/my_ecom && python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && ( test -f staticfiles/assets/css/bootstrap.min.css || test -f staticfiles/assets/css/bootstrap.min.css.gz ) && mkdir -p tmp && touch tmp/restart.txt'
+    - /bin/bash -lc 'source "/home/manirsho/virtualenv/Django-Shoppingo-Ecom/my_ecom/3.13/bin/activate" && cd /home/manirsho/Django-Shoppingo-Ecom/my_ecom && python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py check && mkdir -p tmp && touch tmp/restart.txt'

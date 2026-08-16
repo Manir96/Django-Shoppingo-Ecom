@@ -133,8 +133,8 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements.txt
             python manage.py migrate --noinput
-            python manage.py collectstatic --noinput --clear
-            test -f staticfiles/assets/css/bootstrap.min.css || test -f staticfiles/assets/css/bootstrap.min.css.gz
+            python manage.py collectstatic --noinput
+            python manage.py check
 
             mkdir -p tmp
             touch tmp/restart.txt
