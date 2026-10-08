@@ -107,27 +107,24 @@ jobs:
           echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
           echo "$SSH_PASSPHRASE" | ssh-add "$HOME/.ssh/deploy_key"
 
-      - name: Rsync code to cPanel (same commit as this push)
+      - name: Pack and upload code (tar + scp, no rsync on server)
+        env:
+          SSH_PASSPHRASE: ${{ secrets.DEPLOY_PASSPHRASE }}
         run: |
-          rsync -avz --delete \
-            --exclude '.git/' \
-            --exclude '.deploy-sha' \
-            --exclude 'my_ecom/.env' \
-            --exclude 'my_ecom/.env.*' \
-            --exclude 'my_ecom/data.sqlite3' \
-            --exclude 'my_ecom/media/' \
-            --exclude 'my_ecom/staticfiles/' \
-            --exclude '**/__pycache__/' \
-            --exclude 'venv/' \
-            --exclude '.cursor/' \
-            -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
-            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/"
-          rsync -avz \
-            -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
-            ./.deploy-sha "./.deploy-message" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/"
+          set -e
+          eval "$(ssh-agent -s)"
+          echo "$SSH_PASSPHRASE" | ssh-add "$HOME/.ssh/deploy_key"
+          tar czf /tmp/deploy.tgz \
+            --exclude='./.git' \
+            --exclude='./venv' \
+            --exclude='./my_ecom/media' \
+            --exclude='./my_ecom/staticfiles' \
+            --exclude='./.cursor' \
+            -C "$GITHUB_WORKSPACE" .
+          scp -P "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+            /tmp/deploy.tgz "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/deploy.tgz"
 
-      - name: Run Django on server and restart Passenger
+      - name: Extract on server, run Django, restart Passenger
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ env.DEPLOY_HOST }}
@@ -138,6 +135,8 @@ jobs:
           script: |
             set -e
             cd "${{ env.DEPLOY_DIR }}"
+            tar xzf /tmp/deploy.tgz
+            rm -f /tmp/deploy.tgz
             echo "Deploy marker on server:"
             cat .deploy-sha || true
             cat .deploy-message || true
