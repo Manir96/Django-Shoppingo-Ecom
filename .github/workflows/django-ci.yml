@@ -105,6 +105,7 @@ jobs:
           passphrase: ${{ secrets.DEPLOY_PASSPHRASE }}
 
           script: |
+            set -e
 
             echo "======================================"
             echo "Starting ManirShop deployment"
@@ -115,9 +116,13 @@ jobs:
             echo "Project directory:"
             pwd
 
-            echo "Fetching latest code..."
+            echo "Fetching latest code from GitHub..."
             git fetch origin main
             git reset --hard origin/main
+            echo "Deployed commit: $(git log -1 --oneline)"
+            git rev-parse HEAD
+            git rev-parse origin/main
+            test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 
             echo "Activating Python 3.13..."
             source "${{ env.DEPLOY_VENV }}/bin/activate"
